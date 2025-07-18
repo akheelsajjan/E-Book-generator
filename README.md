@@ -2,7 +2,8 @@
 
 A modern, AI-powered eBook creation platform built with React and enhanced with intelligent writing assistance. Create, edit, and publish professional eBooks with the help of advanced AI features.
 
-![eBook Editor Interface](https://via.placeholder.com/800x400/6366f1/ffffff?text=eBook+Editor+Interface)
+![Uploading image.png…]()
+
 
 ## 🚀 Features
 
