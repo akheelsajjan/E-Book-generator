@@ -1,0 +1,39 @@
+/* Additional global styles for eBook app */
+
+/* Book-specific styles */
+.book-container {
+    @apply max-w-4xl mx-auto p-6;
+}
+
+.book-preview {
+    @apply bg-white shadow-lg rounded-lg p-8;
+}
+
+/* Editor styles */
+.editor-toolbar {
+    @apply flex items-center gap-2 p-2 border-b border-gray-200;
+}
+
+.editor-content {
+    @apply min-h-[400px] p-4 focus:outline-none;
+}
+
+/* Dashboard styles */
+.dashboard-grid {
+    @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6;
+}
+
+.book-card {
+    @apply bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6;
+}
+
+/* Responsive utilities */
+@media (max-width: 768px) {
+    .book-container {
+        @apply p-4;
+    }
+
+    .dashboard-grid {
+        @apply grid-cols-1;
+    }
+}

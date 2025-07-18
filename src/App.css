@@ -1,0 +1,30 @@
+.App[object Object]
+  height: 10vh;
+  width: 100  overflow: hidden;
+}
+
+/* Ensure proper flex behavior */
+.flex[object Object]
+  display: flex;
+}
+
+.flex-col [object Object]
+  flex-direction: column;
+}
+
+.flex-1{
+  flex: 1;
+}
+
+/* Ensure proper height */
+.h-screen[object Object]
+  height: 10
+
+/* Ensure proper overflow handling */
+.overflow-y-auto {
+  overflow-y: auto;
+}
+
+.overflow-hidden {
+  overflow: hidden;
+}
