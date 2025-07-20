@@ -4,6 +4,7 @@ import { AuthProvider } from './hooks/useAuth.jsx';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import BookEditor from './pages/BookEditor';
+import BookPreview from './pages/BookPreview';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import './index.css';
 
@@ -27,6 +28,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <BookEditor />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/preview/:bookId" 
+              element={
+                <ProtectedRoute>
+                  <BookPreview />
                 </ProtectedRoute>
               } 
             />

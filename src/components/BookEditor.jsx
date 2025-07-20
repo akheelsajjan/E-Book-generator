@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Lightbulb, BarChart3, Eye, Download, Plus, BookOpen, FileText, Star, Zap, Lightbulb as LightbulbIcon } from 'lucide-react';
 
-const BookEditor = ({ bookTitle, onSwitchToBookBuilder }) => {
+const BookEditor = ({ bookTitle, onSwitchToBookBuilder, onSwitchToPreview }) => {
   const [selectedPage, setSelectedPage] = useState('Introduction');
   const [currentChapter, setCurrentChapter] = useState('Getting Started');
   const [content, setContent] = useState(
@@ -114,7 +114,10 @@ const BookEditor = ({ bookTitle, onSwitchToBookBuilder }) => {
                   <BarChart3 className="w-4 h-4 mr-2" />
                   AI Analyzer
                 </button>
-                <button className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center">
+                <button 
+                  onClick={onSwitchToPreview}
+                  className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center"
+                >
                   <Eye className="w-4 h-4 mr-2" />
                   Preview
                 </button>

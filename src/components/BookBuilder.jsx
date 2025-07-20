@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { ArrowLeft, BookOpen, User, FileText, List, FileText as AppendixIcon } from 'lucide-react';
+import { ArrowLeft, BookOpen, User, FileText, List, FileText as AppendixIcon, Eye } from 'lucide-react';
 
-const BookBuilder = ({ onBackToEditor, bookTitle }) => {
+const BookBuilder = ({ onBackToEditor, bookTitle, onSwitchToPreview }) => {
   const [activeTab, setActiveTab] = useState('cover');
 
   const tabs = [
@@ -179,6 +179,13 @@ const BookBuilder = ({ onBackToEditor, bookTitle }) => {
               <h2 className="text-xl font-semibold text-gray-900">Book Builder</h2>
             </div>
             <div className="flex items-center space-x-3">
+              <button 
+                onClick={onSwitchToPreview}
+                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors flex items-center"
+              >
+                <Eye className="w-4 h-4 mr-2" />
+                Preview
+              </button>
               <button className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
                 Save Changes
               </button>

@@ -1,24 +1,27 @@
-.App[object Object]
-  height: 10vh;
-  width: 100  overflow: hidden;
+/* Base App styles */
+.App {
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
 }
 
 /* Ensure proper flex behavior */
-.flex[object Object]
+.flex {
   display: flex;
 }
 
-.flex-col [object Object]
+.flex-col {
   flex-direction: column;
 }
 
-.flex-1{
+.flex-1 {
   flex: 1;
 }
 
 /* Ensure proper height */
-.h-screen[object Object]
-  height: 10
+.h-screen {
+  height: 100vh;
+}
 
 /* Ensure proper overflow handling */
 .overflow-y-auto {
@@ -27,4 +30,13 @@
 
 .overflow-hidden {
   overflow: hidden;
+}
+
+/* Button styles */
+.btn-primary {
+  @apply px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors;
+}
+
+.btn-secondary {
+  @apply px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors;
 }
