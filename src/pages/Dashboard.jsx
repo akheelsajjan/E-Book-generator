@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.jsx';
-import { getUserBooks, createBook, deleteBook, getMockBooks } from '../services/booksService';
+import { getUserBooks, deleteBook } from '../services/booksService';
 import BookCard from '../components/book/BookCard';
+import CreateBookModal from '../components/CreateBookModal';
 
 const Dashboard = () => {
   const { user, signOutUser } = useAuth();
@@ -13,6 +14,7 @@ const Dashboard = () => {
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   // Load books on component mount
   useEffect(() => {
@@ -48,33 +50,34 @@ const Dashboard = () => {
       setError('');
       
       if (user) {
-        // For now, use mock data. Replace with getUserBooks(user.uid) when Firebase is configured
-        const userBooks = getMockBooks();
-        setBooks(userBooks);
+        console.log('Loading books for user:', user.uid);
+        const userBooks = await getUserBooks(user.uid);
+        console.log('Loaded books:', userBooks);
+        setBooks(userBooks || []);
       }
     } catch (error) {
       console.error('Error loading books:', error);
-      setError('Failed to load books. Please try again.');
+      // Don't show error if it's just that no books exist yet
+      if (error.message && error.message.includes('index')) {
+        console.log('Index error - this is expected for new users with no books');
+        setBooks([]);
+      } else {
+        setError('Failed to load books. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCreateBook = async () => {
-    try {
-      if (!user) return;
-      
-      const newBook = await createBook(user.uid, {
-        title: 'Untitled Book',
-        description: 'Start writing your eBook...'
-      });
-      
-      // Navigate to the editor for the new book
-      navigate(`/editor/${newBook.id}`);
-    } catch (error) {
-      console.error('Error creating book:', error);
-      setError('Failed to create book. Please try again.');
-    }
+  const handleCreateBook = () => {
+    setShowCreateModal(true);
+  };
+
+  const handleCreateBookSuccess = (result) => {
+    // The modal will handle navigation automatically
+    console.log('Book created successfully:', result);
+    // You could add a toast notification here
+    // toast.success('Book initialized with 1 chapter and 1 page.');
   };
 
   const handleEditBook = (bookId) => {
@@ -331,6 +334,13 @@ const Dashboard = () => {
           )}
         </div>
       </div>
+
+      {/* Create Book Modal */}
+      <CreateBookModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSuccess={handleCreateBookSuccess}
+      />
     </div>
   );
 };

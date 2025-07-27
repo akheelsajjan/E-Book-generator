@@ -1,8 +1,10 @@
-export { default as PreviewEngine } from './PreviewEngine';
-export { default as PageRenderer } from './PageRenderer';
-export { default as BookCoverPreview } from './BookCoverPreview';
-export { default as TOCPreview } from './TOCPreview';
-export { default as AuthorPreview } from './AuthorPreview';
-export { default as PrefacePreview } from './PrefacePreview';
-export { default as AppendixPreview } from './AppendixPreview';
-export { default as PaginationControls } from './PaginationControls'; 
+// Preview Components exports
+export { default as PreviewLayout } from './PreviewLayout';
+export { default as PreviewSidebar } from './PreviewSidebar';
+export { default as PreviewHeader } from './PreviewHeader';
+export { default as PreviewPage } from './PreviewPage';
+export { default as PreviewFooter } from './PreviewFooter';
+export { default as PreviewSettings } from './PreviewSettings';
+export { default as BookContentRenderer } from './BookContentRenderer';
+export { default as ChapterPage } from './ChapterPage';
+export { default as PageSwitchController } from './PageSwitchController'; 

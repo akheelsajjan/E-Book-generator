@@ -17,13 +17,11 @@ import { generateBookId } from '../lib/utils';
 // Get all books for a user
 export const getUserBooks = async (userId) => {
   try {
+    console.log('Fetching books for user:', userId);
     const booksRef = collection(db, 'books');
-    const q = query(
-      booksRef, 
-      where('userId', '==', userId),
-      orderBy('updatedAt', 'desc')
-    );
     
+    // First, get all books for the user without ordering
+    const q = query(booksRef, where('userId', '==', userId));
     const querySnapshot = await getDocs(q);
     const books = [];
     
@@ -34,6 +32,14 @@ export const getUserBooks = async (userId) => {
       });
     });
     
+    // Sort the books by updatedAt in descending order on the client side
+    books.sort((a, b) => {
+      const aTime = a.updatedAt?.toDate?.() || a.updatedAt || new Date(0);
+      const bTime = b.updatedAt?.toDate?.() || b.updatedAt || new Date(0);
+      return bTime - aTime;
+    });
+    
+    console.log('Fetched books:', books.length);
     return books;
   } catch (error) {
     console.error('Error fetching user books:', error);
@@ -41,7 +47,7 @@ export const getUserBooks = async (userId) => {
   }
 };
 
-// Get a single book by ID
+// Get a single book by ID (basic book data only)
 export const getBook = async (bookId) => {
   try {
     const bookRef = doc(db, 'books', bookId);
@@ -57,6 +63,71 @@ export const getBook = async (bookId) => {
     }
   } catch (error) {
     console.error('Error fetching book:', error);
+    throw error;
+  }
+};
+
+// Get complete book structure including chapters and pages
+export const getBookWithChapters = async (bookId) => {
+  try {
+    const bookRef = doc(db, 'books', bookId);
+    const bookSnap = await getDoc(bookRef);
+    
+    if (!bookSnap.exists()) {
+      throw new Error('Book not found');
+    }
+
+    const bookData = {
+      id: bookSnap.id,
+      ...bookSnap.data()
+    };
+
+    // Load chapters
+    const chaptersRef = collection(db, 'books', bookId, 'chapters');
+    const chaptersQuery = query(chaptersRef, orderBy('order', 'asc'));
+    const chaptersSnapshot = await getDocs(chaptersQuery);
+    
+    console.log('getBookWithChapters - Chapters snapshot:', chaptersSnapshot.docs.length, 'chapters found');
+    
+    const chapters = [];
+    
+    // Load pages for each chapter
+    for (const chapterDoc of chaptersSnapshot.docs) {
+      const chapterData = {
+        id: chapterDoc.id,
+        ...chapterDoc.data()
+      };
+
+      console.log('getBookWithChapters - Processing chapter:', chapterData);
+
+      // Load pages for this chapter
+      const pagesRef = collection(db, 'books', bookId, 'chapters', chapterDoc.id, 'pages');
+      const pagesQuery = query(pagesRef, orderBy('order', 'asc'));
+      const pagesSnapshot = await getDocs(pagesQuery);
+      
+      console.log('getBookWithChapters - Pages for chapter', chapterData.title, ':', pagesSnapshot.docs.length, 'pages found');
+      
+      const pages = pagesSnapshot.docs.map(pageDoc => ({
+        id: pageDoc.id,
+        ...pageDoc.data()
+      }));
+
+      console.log('getBookWithChapters - Pages data:', pages);
+
+      chapterData.pages = pages;
+      chapters.push(chapterData);
+    }
+
+    // Add chapters to book data
+    bookData.chapters = chapters;
+
+    console.log('getBookWithChapters - Final book data being returned:', bookData);
+    console.log('getBookWithChapters - Total chapters:', bookData.chapters.length);
+    console.log('getBookWithChapters - Total pages:', bookData.chapters.reduce((total, chapter) => total + chapter.pages.length, 0));
+
+    return bookData;
+  } catch (error) {
+    console.error('Error fetching book with chapters:', error);
     throw error;
   }
 };
@@ -133,6 +204,112 @@ export const publishBook = async (bookId) => {
     });
   } catch (error) {
     console.error('Error publishing book:', error);
+    throw error;
+  }
+};
+
+// Create a new page in Firestore
+export const createPage = async (bookId, chapterId, pageData) => {
+  try {
+    console.log('Creating page in Firestore:', { bookId, chapterId, pageData });
+    
+    const pagesRef = collection(db, 'books', bookId, 'chapters', chapterId, 'pages');
+    const pageRef = await addDoc(pagesRef, {
+      ...pageData,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+    
+    console.log('Page created successfully in Firestore with ID:', pageRef.id);
+    return pageRef.id;
+  } catch (error) {
+    console.error('Error creating page:', error);
+    throw error;
+  }
+};
+
+// Update a page in Firestore
+export const updatePage = async (bookId, chapterId, pageId, pageData) => {
+  try {
+    console.log('Updating page in Firestore:', { bookId, chapterId, pageId, pageData });
+    
+    const pageRef = doc(db, 'books', bookId, 'chapters', chapterId, 'pages', pageId);
+    await updateDoc(pageRef, {
+      ...pageData,
+      updatedAt: serverTimestamp()
+    });
+    
+    console.log('Page updated successfully in Firestore');
+  } catch (error) {
+    console.error('Error updating page:', error);
+    throw error;
+  }
+};
+
+// Create a new chapter in Firestore
+export const createChapter = async (bookId, chapterData) => {
+  try {
+    console.log('Creating chapter in Firestore:', { bookId, chapterData });
+    
+    const chaptersRef = collection(db, 'books', bookId, 'chapters');
+    const chapterRef = await addDoc(chaptersRef, {
+      ...chapterData,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+    
+    console.log('Chapter created successfully in Firestore with ID:', chapterRef.id);
+    return chapterRef.id;
+  } catch (error) {
+    console.error('Error creating chapter:', error);
+    throw error;
+  }
+};
+
+// Delete a chapter from Firestore
+export const deleteChapter = async (bookId, chapterId) => {
+  try {
+    console.log('Deleting chapter from Firestore:', { bookId, chapterId });
+    
+    const chapterRef = doc(db, 'books', bookId, 'chapters', chapterId);
+    await deleteDoc(chapterRef);
+    
+    console.log('Chapter deleted successfully from Firestore');
+  } catch (error) {
+    console.error('Error deleting chapter:', error);
+    throw error;
+  }
+};
+
+// Delete a page from Firestore
+export const deletePage = async (bookId, chapterId, pageId) => {
+  try {
+    console.log('Deleting page from Firestore:', { bookId, chapterId, pageId });
+    
+    const pageRef = doc(db, 'books', bookId, 'chapters', chapterId, 'pages', pageId);
+    await deleteDoc(pageRef);
+    
+    console.log('Page deleted successfully from Firestore');
+  } catch (error) {
+    console.error('Error deleting page:', error);
+    throw error;
+  }
+};
+
+// Update a chapter in Firestore
+export const updateChapter = async (bookId, chapterId, chapterData) => {
+  try {
+    console.log('Updating chapter in Firestore:', { bookId, chapterId, chapterData });
+    
+    const chapterRef = doc(db, 'books', bookId, 'chapters', chapterId);
+    await updateDoc(chapterRef, {
+      ...chapterData,
+      updatedAt: serverTimestamp()
+    });
+    
+    console.log('Chapter updated successfully in Firestore');
+  } catch (error) {
+    console.error('Error updating chapter:', error);
     throw error;
   }
 };
