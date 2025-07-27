@@ -175,17 +175,17 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading your books...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-blue mx-auto mb-4"></div>
+          <p className="text-secondary">Loading your books...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       {/* Header */}
       <DashboardHeader 
         onCreateBook={handleCreateBook}
@@ -195,7 +195,7 @@ const Dashboard = () => {
       <div className="container mx-auto px-6 py-8">
         {/* Error message */}
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+          <div className="glass-effect border border-red-500/20 text-red-400 px-4 py-3 rounded-lg mb-6">
             {error}
           </div>
         )}

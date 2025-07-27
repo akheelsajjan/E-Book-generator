@@ -6,14 +6,14 @@ const EnhancedBookCard = ({ book, onEdit, onPreview, onDelete, onDuplicate, onRe
 
   const getStatusBadge = (status) => {
     const badges = {
-      published: { label: 'Published', color: 'bg-green-100 text-green-800' },
-      draft: { label: 'Draft', color: 'bg-yellow-100 text-yellow-800' },
-      'in-progress': { label: 'In Progress', color: 'bg-blue-100 text-blue-800' }
+      published: { label: 'Published', className: 'badge badge-published' },
+      draft: { label: 'Draft', className: 'badge badge-draft' },
+      'in-progress': { label: 'In Progress', className: 'badge badge-in-progress' }
     };
     
     const badge = badges[status] || badges.draft;
     return (
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${badge.color}`}>
+      <span className={badge.className}>
         {badge.label}
       </span>
     );
@@ -37,15 +37,15 @@ const EnhancedBookCard = ({ book, onEdit, onPreview, onDelete, onDuplicate, onRe
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border border-gray-100 group">
+    <div className="card group hover:scale-105 transition-all duration-300">
       {/* Card Header */}
       <div className="p-6 pb-4">
         <div className="flex items-start justify-between">
           <div className="flex-1 min-w-0">
-            <h3 className="text-lg font-semibold text-gray-900 truncate mb-2">
+            <h3 className="text-lg font-semibold text-primary truncate mb-2">
               {book.title || 'Untitled Book'}
             </h3>
-            <p className="text-sm text-gray-600 mb-3">
+            <p className="text-sm text-secondary mb-3">
               {book.cover?.author || book.author || 'Unknown Author'}
             </p>
           </div>
@@ -57,7 +57,7 @@ const EnhancedBookCard = ({ book, onEdit, onPreview, onDelete, onDuplicate, onRe
         </div>
 
         {/* Book Stats */}
-        <div className="flex items-center space-x-4 text-sm text-gray-500">
+        <div className="flex items-center space-x-4 text-sm text-muted">
           <div className="flex items-center space-x-1">
             <BookOpen className="w-4 h-4" />
             <span>{getChaptersCount()} chapters</span>
@@ -76,14 +76,14 @@ const EnhancedBookCard = ({ book, onEdit, onPreview, onDelete, onDuplicate, onRe
           <div className="flex space-x-2">
             <button
               onClick={() => onEdit(book.id)}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center space-x-2"
+              className="btn-primary flex-1 flex items-center justify-center space-x-2"
             >
               <Edit className="w-4 h-4" />
               <span>Edit</span>
             </button>
             <button
               onClick={() => onPreview(book.id)}
-              className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center space-x-2"
+              className="btn-secondary flex-1 flex items-center justify-center space-x-2"
             >
               <Eye className="w-4 h-4" />
               <span>Preview</span>
@@ -94,21 +94,21 @@ const EnhancedBookCard = ({ book, onEdit, onPreview, onDelete, onDuplicate, onRe
           <div className="relative">
             <button
               onClick={() => setShowMenu(!showMenu)}
-              className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors duration-200"
+              className="p-2 text-muted hover:text-primary rounded-lg hover:bg-glass-hover transition-colors duration-200"
             >
               <MoreVertical className="w-4 h-4" />
             </button>
 
             {/* Dropdown Menu */}
             {showMenu && (
-              <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+              <div className="absolute right-0 top-full mt-2 w-48 glass-effect shadow-lg z-10">
                 <div className="py-1">
                   <button
                     onClick={() => {
                       onRename(book.id);
                       setShowMenu(false);
                     }}
-                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
+                    className="w-full px-4 py-2 text-left text-sm text-primary hover:bg-glass-hover flex items-center space-x-2"
                   >
                     <Edit className="w-4 h-4" />
                     <span>Rename</span>
@@ -118,7 +118,7 @@ const EnhancedBookCard = ({ book, onEdit, onPreview, onDelete, onDuplicate, onRe
                       onDuplicate(book.id);
                       setShowMenu(false);
                     }}
-                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
+                    className="w-full px-4 py-2 text-left text-sm text-primary hover:bg-glass-hover flex items-center space-x-2"
                   >
                     <Copy className="w-4 h-4" />
                     <span>Duplicate</span>
@@ -128,7 +128,7 @@ const EnhancedBookCard = ({ book, onEdit, onPreview, onDelete, onDuplicate, onRe
                       onDelete(book.id);
                       setShowMenu(false);
                     }}
-                    className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center space-x-2"
+                    className="w-full px-4 py-2 text-left text-sm text-red-400 hover:bg-red-500/10 flex items-center space-x-2"
                   >
                     <Trash2 className="w-4 h-4" />
                     <span>Delete</span>

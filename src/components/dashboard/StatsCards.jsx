@@ -12,9 +12,9 @@ const StatsCards = ({ stats }) => {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
         </svg>
       ),
-      bgColor: 'bg-blue-100',
-      textColor: 'text-blue-600',
-      gradient: 'from-blue-500 to-blue-600'
+      gradient: 'from-blue-500 to-blue-600',
+      bgColor: 'bg-blue-500/20',
+      textColor: 'text-blue-400'
     },
     {
       title: 'Published',
@@ -24,9 +24,9 @@ const StatsCards = ({ stats }) => {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       ),
-      bgColor: 'bg-green-100',
-      textColor: 'text-green-600',
-      gradient: 'from-green-500 to-green-600'
+      gradient: 'from-green-500 to-green-600',
+      bgColor: 'bg-green-500/20',
+      textColor: 'text-green-400'
     },
     {
       title: 'In Progress',
@@ -36,9 +36,9 @@ const StatsCards = ({ stats }) => {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       ),
-      bgColor: 'bg-yellow-100',
-      textColor: 'text-yellow-600',
-      gradient: 'from-yellow-500 to-yellow-600'
+      gradient: 'from-orange-500 to-orange-600',
+      bgColor: 'bg-orange-500/20',
+      textColor: 'text-orange-400'
     },
     {
       title: 'Completion Rate',
@@ -48,9 +48,9 @@ const StatsCards = ({ stats }) => {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
         </svg>
       ),
-      bgColor: 'bg-purple-100',
-      textColor: 'text-purple-600',
-      gradient: 'from-purple-500 to-purple-600'
+      gradient: 'from-purple-500 to-purple-600',
+      bgColor: 'bg-purple-500/20',
+      textColor: 'text-purple-400'
     }
   ];
 
@@ -59,14 +59,14 @@ const StatsCards = ({ stats }) => {
       {cards.map((card, index) => (
         <div
           key={index}
-          className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border border-gray-100"
+          className="stats-card group hover:scale-105 transition-all duration-300"
         >
           <div className="flex items-center justify-between">
             <div className="flex-1">
-              <p className="text-sm font-medium text-gray-600 mb-1">{card.title}</p>
-              <p className="text-2xl font-bold text-gray-900">{card.value}</p>
+              <p className="text-sm font-medium text-secondary mb-2">{card.title}</p>
+              <p className="text-3xl font-bold text-primary">{card.value}</p>
             </div>
-            <div className={`p-3 rounded-xl ${card.bgColor} bg-gradient-to-r ${card.gradient} bg-opacity-10`}>
+            <div className={`p-4 rounded-xl ${card.bgColor} bg-gradient-to-r ${card.gradient} bg-opacity-20`}>
               <div className={card.textColor}>
                 {card.icon}
               </div>
@@ -75,8 +75,8 @@ const StatsCards = ({ stats }) => {
           
           {/* Progress bar for completion rate */}
           {card.title === 'Completion Rate' && (
-            <div className="mt-3">
-              <div className="w-full bg-gray-200 rounded-full h-2">
+            <div className="mt-4">
+              <div className="w-full bg-glass rounded-full h-2">
                 <div
                   className="bg-gradient-to-r from-purple-500 to-purple-600 h-2 rounded-full transition-all duration-300"
                   style={{ width: `${completionRate}%` }}
