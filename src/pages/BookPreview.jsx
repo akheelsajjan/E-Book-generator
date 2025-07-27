@@ -88,7 +88,7 @@ const BookPreview = () => {
         }
       });
     }
-
+    
     // Skip appendix for TOC
     if (book.appendix) globalPageNumber++;
 
@@ -204,7 +204,7 @@ const BookPreview = () => {
                   page: page
                 }
               });
-            } else {
+      } else {
               // Skip pages without titles but still increment page number
               pageNumber++;
             }
@@ -265,7 +265,7 @@ const BookPreview = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <p className="text-red-600 mb-4">{error}</p>
-          <button 
+          <button
             onClick={() => navigate('/dashboard')}
             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
           >
@@ -278,16 +278,16 @@ const BookPreview = () => {
 
   // No book data
   if (!bookData || !bookStructure.length) {
-    return (
+  return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <p className="text-gray-600 mb-4">No book data available</p>
-          <button 
+            <button
             onClick={() => navigate('/dashboard')}
             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-          >
+            >
             Back to Dashboard
-          </button>
+            </button>
         </div>
       </div>
     );
@@ -313,7 +313,7 @@ const BookPreview = () => {
       />
       
       <PreviewPage 
-        currentPage={currentPage}
+              currentPage={currentPage}
         viewMode={viewMode}
         bookStructure={bookStructure}
         currentPageIndex={currentPageIndex}
