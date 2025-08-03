@@ -1,22 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth.jsx';
-import { useRef } from 'react';
-import { ArrowLeft, Lightbulb, BarChart3, Eye, Download, Plus, BookOpen, FileText, Star, Zap, Lightbulb as LightbulbIcon, User, List } from 'lucide-react';
 import EditorView from './EditorView';
 import BookBuilderView from './BookBuilderView';
-
-const AI_FEATURES = [
-  { key: 'aiWriter', label: 'AI Writer', icon: '✍️' },
-  { key: 'aiEnhancer', label: 'AI Enhancer', icon: '✨' },
-  { key: 'aiOutline', label: 'AI Outline', icon: '📋' },
-  { key: 'aiAssistant', label: 'AI Assistant', icon: '🤖' },
-  { key: 'aiSuggestions', label: 'AI Suggestions', icon: '💡' },
-  { key: 'aiResearch', label: 'AI Research', icon: '🔍' },
-  { key: 'aiAnalysis', label: 'AI Analysis', icon: '📊' },
-  { key: 'aiGrammar', label: 'AI Grammar Check', icon: '📝' },
-  { key: 'aiPlagiarism', label: 'AI Plagiarism Check', icon: '🔒' },
-];
 
 const BookEditorMain = ({ book: bookProp, setBook }) => {
   const { bookId } = useParams();
@@ -78,34 +64,7 @@ const BookEditorMain = ({ book: bookProp, setBook }) => {
     bookData.chapters = [];
   }
 
-  // AI Settings State
-  const [aiSettings, setAiSettings] = useState({
-    aiWriter: true,
-    aiEnhancer: true,
-    aiOutline: false,
-    aiAssistant: true,
-    aiSuggestions: true,
-    aiResearch: false,
-    aiAnalysis: false,
-    aiGrammar: true,
-    aiPlagiarism: false
-  });
 
-  // AI Dropdown State
-  const [aiDropdownOpen, setAiDropdownOpen] = useState(false);
-  const aiDropdownRef = useRef(null);
-
-  // Click outside handler for AI dropdown
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (aiDropdownRef.current && !aiDropdownRef.current.contains(event.target)) {
-        setAiDropdownOpen(false);
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
   // Calculate progress
   const calculateProgress = () => {
@@ -120,13 +79,7 @@ const BookEditorMain = ({ book: bookProp, setBook }) => {
     return totalPages > 0 ? Math.round((completedPages / totalPages) * 100) : 0;
   };
 
-  // Handle AI setting changes
-  const handleAiSettingChange = (key) => {
-    setAiSettings(prev => ({
-      ...prev,
-      [key]: !prev[key]
-    }));
-  };
+
 
   return (
     <>
@@ -134,27 +87,15 @@ const BookEditorMain = ({ book: bookProp, setBook }) => {
         <EditorView
           book={bookData}
           setBook={setBook}
-          aiSettings={aiSettings}
-          aiDropdownOpen={aiDropdownOpen}
-          setAiDropdownOpen={setAiDropdownOpen}
-          aiDropdownRef={aiDropdownRef}
           calculateProgress={calculateProgress}
-          handleAiSettingChange={handleAiSettingChange}
           onSwitchToBookBuilder={() => setCurrentView('bookBuilder')}
-          AI_FEATURES={AI_FEATURES}
         />
       ) : (
         <BookBuilderView
           book={bookData}
           setBook={setBook}
-          aiSettings={aiSettings}
-          aiDropdownOpen={aiDropdownOpen}
-          setAiDropdownOpen={setAiDropdownOpen}
-          aiDropdownRef={aiDropdownRef}
           calculateProgress={calculateProgress}
-          handleAiSettingChange={handleAiSettingChange}
           onSwitchToEditor={() => setCurrentView('editor')}
-          AI_FEATURES={AI_FEATURES}
         />
       )}
     </>

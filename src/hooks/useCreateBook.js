@@ -61,8 +61,8 @@ export const useCreateBook = () => {
         // Step 2: Create default chapter
         const chaptersRef = collection(db, 'books', bookId, 'chapters');
         const chapterDoc = await addDoc(chaptersRef, {
-          title: "Chapter 1",
-          description: "This is your first chapter...!!",
+          title: "Introduction",
+          description: "Welcome to your book! This chapter introduces your main topic and sets the stage for what readers will learn.",
           order: 1,
           isVisible: true,
           includeInTOC: true,
@@ -81,11 +81,29 @@ export const useCreateBook = () => {
         
         // Set default content based on view type
         const defaultContent = bookData.viewType === 'page' 
-          ? "Start writing your first page here...!!" 
-          : "Start writing your first chapter here...!!";
+          ? `Welcome to "${bookData.title.trim()}"!
+
+This is your first page. Start writing your introduction here. Consider including:
+
+• What this book is about
+• Who it's written for
+• What readers will learn
+• How to use this book
+
+Take your time to craft a compelling introduction that draws readers in and sets clear expectations for what's to come.` 
+          : `Welcome to "${bookData.title.trim()}"!
+
+This is your first chapter. Start writing your introduction here. Consider including:
+
+• What this book is about
+• Who it's written for
+• What readers will learn
+• How to use this book
+
+Take your time to craft a compelling introduction that draws readers in and sets clear expectations for what's to come.`;
         
         const pageDoc = await addDoc(pagesRef, {
-          title: "Page 1",
+          title: "",
           content: defaultContent,
           pageType: "text",
           order: 1,

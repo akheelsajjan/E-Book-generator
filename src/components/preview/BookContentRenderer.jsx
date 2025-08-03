@@ -5,11 +5,11 @@ const BookContentRenderer = ({ content, showTitle = false, title = '' }) => {
     if (!showTitle || !title) return null;
 
     return (
-      <div className="text-center mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 mb-4">
+      <div className="text-center mb-4">
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">
           {title}
         </h1>
-        <div className="w-24 h-1 bg-gray-300 mx-auto"></div>
+        <div className="w-full h-1 bg-gray-300"></div>
       </div>
     );
   };
@@ -43,9 +43,9 @@ const BookContentRenderer = ({ content, showTitle = false, title = '' }) => {
         <div 
           dangerouslySetInnerHTML={{ 
             __html: content
-              .replace(/\n\n/g, '</p><p style="margin-top: 1.5em; text-indent: 2em; max-width: 100%; word-wrap: break-word; overflow-wrap: break-word; word-break: break-word;">')
+              .replace(/\n\n/g, `</p><p style="margin-top: 1.5em; text-indent: ${showTitle && title ? '2em' : '0'}; max-width: 100%; word-wrap: break-word; overflow-wrap: break-word; word-break: break-word;">`)
               .replace(/\n/g, ' ')
-              .replace(/^/, '<p style="text-indent: 2em; max-width: 100%; word-wrap: break-word; overflow-wrap: break-word; word-break: break-word;">')
+              .replace(/^/, `<p style="text-indent: ${showTitle && title ? '2em' : '0'}; max-width: 100%; word-wrap: break-word; overflow-wrap: break-word; word-break: break-word;">`)
               .replace(/$/, '</p>')
           }} 
         />
@@ -57,8 +57,8 @@ const BookContentRenderer = ({ content, showTitle = false, title = '' }) => {
     <div className="h-full flex flex-col">
       {renderTitle()}
       <div className="flex-1" style={{ 
-        marginTop: '1em', 
-        marginBottom: '1em',
+        marginTop: showTitle && title ? '0.5em' : '0', 
+        marginBottom: showTitle && title ? '0.5em' : '1em',
         maxWidth: '100%',
         overflow: 'hidden'
       }}>

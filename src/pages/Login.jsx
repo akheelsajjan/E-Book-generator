@@ -29,17 +29,17 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+    <div className="min-h-screen dashboard-container flex items-center justify-center">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900">eBook Builder</h1>
-          <p className="mt-2 text-gray-600">Sign in to create your eBooks</p>
+          <h1 className="text-3xl font-bold text-primary">eBook Builder</h1>
+          <p className="mt-2 text-secondary">Sign in to create your eBooks</p>
         </div>
         
-        <div className="bg-white rounded-lg shadow-md p-8">
+        <div className="card p-8">
           <div className="space-y-4">
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+              <div className="card border border-red-500/20 text-red-400 px-4 py-3">
                 {error}
               </div>
             )}
@@ -68,7 +68,7 @@ const Login = () => {
             </button>
             
             <div className="text-center">
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-secondary">
                 By signing in, you agree to our terms of service
               </p>
             </div>

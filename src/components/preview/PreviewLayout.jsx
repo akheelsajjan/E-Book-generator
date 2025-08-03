@@ -11,7 +11,7 @@ const PreviewLayout = ({ children }) => {
       {/* Main Content Area */}
       <div className="flex-1 flex overflow-hidden">
         {/* Sidebar */}
-        <div className="w-64 bg-white border-r border-gray-200 flex-shrink-0 flex flex-col">
+        <div className="w-80 bg-white border-r border-gray-200 flex-shrink-0 flex flex-col">
           {React.Children.toArray(children).find(child => child.type?.name === 'PreviewSidebar')}
         </div>
         

@@ -18,7 +18,7 @@ function App() {
   console.log('App rendering, currentView:', currentView);
 
   return (
-    <div className="App">
+    <div className="App dashboard-container">
       {currentView === 'editor' ? (
         <BookEditor 
           bookTitle={bookTitle}

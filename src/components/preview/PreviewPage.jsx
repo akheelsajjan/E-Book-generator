@@ -1,64 +1,94 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import BookContentRenderer from './BookContentRenderer';
 import ChapterPage from './ChapterPage';
 
-const PreviewPage = ({ currentPage, viewMode, bookStructure, currentPageIndex }) => {
+const PreviewPage = ({ currentPage, viewMode, bookStructure, currentPageIndex, onSplitPage, isSplitting = false }) => {
+  const [isOverflowing, setIsOverflowing] = useState(false);
+  const [showSplitMessage, setShowSplitMessage] = useState(false);
+  const contentRef = useRef(null);
+  
   if (!currentPage) return null;
+
+  // Check for content overflow
+  const checkOverflow = () => {
+    if (contentRef.current && currentPage.type === 'page') {
+      const container = contentRef.current;
+      const isOverflowing = container.scrollHeight > container.clientHeight;
+      setIsOverflowing(isOverflowing);
+      
+      if (isOverflowing && !showSplitMessage) {
+        setShowSplitMessage(true);
+      }
+    }
+  };
+
+  // Monitor content changes and window resize
+  useEffect(() => {
+    checkOverflow();
+    
+    const handleResize = () => {
+      setTimeout(checkOverflow, 100);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [currentPage, showSplitMessage]);
 
   const renderPageContent = () => {
     const { type, data, pageNumber } = currentPage;
 
     switch (type) {
       case 'cover':
-        return renderCoverPage(data.bookData, pageNumber);
+        return renderCoverPage(data, pageNumber);
       
       case 'author':
-        return renderAuthorPage(data.bookData, pageNumber);
+        return renderAuthorPage(data, pageNumber);
       
       case 'preface':
-        return renderPrefacePage(data.bookData, pageNumber);
+        return renderPrefacePage(data, pageNumber);
       
       case 'toc':
-        return renderTOCPage(data.bookData, data.tocPageIndex, data.totalTOCPages, pageNumber);
+        return renderTOCPage(data, 0, 1, pageNumber);
       
       case 'chapter':
-        return <ChapterPage chapter={data.chapter} pageNumber={pageNumber} />;
+        return <ChapterPage chapter={data} pageNumber={pageNumber} />;
       
       case 'page':
-        return renderContentPage(data.chapter, data.page, pageNumber);
+        return renderContentPage(data.chapter, data, pageNumber);
       
       case 'appendix':
-        return renderAppendixPage(data.bookData, pageNumber);
+        return renderAppendixPage(data, pageNumber);
       
       default:
         return renderDefaultPage(pageNumber);
     }
   };
 
-  const renderCoverPage = (bookData, pageNumber) => {
-    const cover = bookData?.cover;
+  const renderCoverPage = (coverData, pageNumber) => {
+    const cover = coverData;
+    const hasCustomBackground = cover?.backgroundColor;
     
     return (
       <div 
         className="w-[600px] h-[800px] bg-white rounded-lg shadow-2xl border border-gray-200 relative overflow-hidden"
         style={{
-          background: cover?.backgroundColor 
+          background: hasCustomBackground 
             ? `linear-gradient(135deg, ${cover.backgroundColor} 0%, ${cover.backgroundColor}dd 100%)`
             : 'linear-gradient(145deg, #ffffff 0%, #fefefe 100%)',
           boxShadow: '0 10px 30px rgba(0, 0, 0, 0.15), 0 1px 8px rgba(0, 0, 0, 0.1)',
-          color: cover?.backgroundColor ? 'white' : '#333333'
+          color: hasCustomBackground ? 'white' : '#333333'
         }}
       >
         <div 
           className="h-full flex flex-col items-center justify-center p-8 text-center"
           style={{
-            background: 'linear-gradient(to right, #fafafa 0%, #ffffff 5%, #ffffff 95%, #fafafa 100%)',
+            background: hasCustomBackground ? 'transparent' : 'linear-gradient(to right, #fafafa 0%, #ffffff 5%, #ffffff 95%, #fafafa 100%)',
             padding: '40px',
             maxWidth: '100%'
           }}
         >
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            {cover?.title || bookData?.title || 'Book Title'}
+            {cover?.title || 'Book Title'}
           </h1>
           
           {cover?.subtitle && (
@@ -72,7 +102,7 @@ const PreviewPage = ({ currentPage, viewMode, bookStructure, currentPageIndex })
           <div className="author-section">
             <p className="text-lg mb-2">by</p>
             <p className="text-2xl md:text-3xl font-semibold">
-              {cover?.author || bookData?.author?.name || 'Unknown Author'}
+              {cover?.author || 'Unknown Author'}
             </p>
           </div>
           
@@ -95,8 +125,8 @@ const PreviewPage = ({ currentPage, viewMode, bookStructure, currentPageIndex })
     );
   };
 
-  const renderAuthorPage = (bookData, pageNumber) => {
-    const author = bookData?.author;
+  const renderAuthorPage = (authorData, pageNumber) => {
+    const author = authorData;
     
     return (
       <div 
@@ -127,30 +157,41 @@ const PreviewPage = ({ currentPage, viewMode, bookStructure, currentPageIndex })
             <div className="text-center mb-6">
               <h2 className="text-2xl font-bold mb-2">{author?.name || 'Author Name'}</h2>
               {author?.title && (
-                <p className="text-lg text-gray-600 italic">{author.title}</p>
+                <p className="text-lg text-gray-600 mb-4">{author.title}</p>
               )}
             </div>
             
             {author?.bio && (
-              <BookContentRenderer content={author.bio} />
+              <div className="text-gray-700 leading-relaxed">
+                <p className="text-justify">{author.bio}</p>
+              </div>
             )}
             
             {author?.credentials && author.credentials.length > 0 && (
-              <div className="mb-6">
-                <h3 className="text-xl font-semibold mb-4 text-gray-800">Credentials</h3>
-                <div className="space-y-2">
+              <div className="mt-6">
+                <h3 className="text-lg font-semibold mb-3">Credentials</h3>
+                <ul className="space-y-2">
                   {author.credentials.map((credential, index) => (
-                    <p key={index} style={{ 
-                      textIndent: '2em',
-                      fontSize: '16px',
-                      lineHeight: '1.6',
-                      fontFamily: 'Georgia, serif',
-                      textAlign: 'justify'
-                    }}>
-                      • {credential}
-                    </p>
+                    <li key={index} className="flex items-center">
+                      <span className="text-blue-600 mr-2">•</span>
+                      <span className="text-gray-700">{credential}</span>
+                    </li>
                   ))}
-                </div>
+                </ul>
+              </div>
+            )}
+            
+            {author?.achievements && author.achievements.length > 0 && (
+              <div className="mt-6">
+                <h3 className="text-lg font-semibold mb-3">Achievements</h3>
+                <ul className="space-y-2">
+                  {author.achievements.map((achievement, index) => (
+                    <li key={index} className="flex items-center">
+                      <span className="text-green-600 mr-2">•</span>
+                      <span className="text-gray-700">{achievement}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
             )}
           </div>
@@ -168,8 +209,8 @@ const PreviewPage = ({ currentPage, viewMode, bookStructure, currentPageIndex })
     );
   };
 
-  const renderPrefacePage = (bookData, pageNumber) => {
-    const preface = bookData?.preface;
+  const renderPrefacePage = (prefaceData, pageNumber) => {
+    const preface = prefaceData;
     
     return (
       <div 
@@ -197,17 +238,25 @@ const PreviewPage = ({ currentPage, viewMode, bookStructure, currentPageIndex })
           </div>
           
           <div className="flex-1">
-            <BookContentRenderer content={preface?.content} />
+            {preface?.content && (
+              <div className="text-gray-700 leading-relaxed">
+                <BookContentRenderer content={preface.content} />
+              </div>
+            )}
+            
+            {preface?.acknowledgments && preface.acknowledgments.length > 0 && (
+              <div className="mt-8 pt-6 border-t border-gray-200">
+                <h3 className="text-lg font-semibold mb-4 text-gray-800">Acknowledgments</h3>
+                <div className="space-y-2">
+                  {preface.acknowledgments.map((acknowledgment, index) => (
+                    <p key={index} className="text-gray-700 italic">
+                      {acknowledgment}
+                    </p>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
-          
-          {preface?.author && (
-            <div className="mt-8 text-right">
-              <p className="text-lg font-semibold">{preface.author}</p>
-              {preface?.date && (
-                <p className="text-sm text-gray-600">{preface.date}</p>
-              )}
-            </div>
-          )}
         </div>
         
         {pageNumber && (
@@ -224,6 +273,11 @@ const PreviewPage = ({ currentPage, viewMode, bookStructure, currentPageIndex })
 
   const renderTOCPage = (bookData, tocPageIndex, totalTOCPages, pageNumber) => {
     const generateTOCEntries = (book) => {
+      // Add null check to prevent TypeError
+      if (!book) {
+        return [];
+      }
+      
       const entries = [];
       let globalPageNumber = 1;
 
@@ -367,6 +421,7 @@ const PreviewPage = ({ currentPage, viewMode, bookStructure, currentPageIndex })
         }}
       >
         <div 
+          ref={contentRef}
           className="h-full flex flex-col"
           style={{
             background: 'linear-gradient(to right, #fafafa 0%, #ffffff 5%, #ffffff 95%, #fafafa 100%)',
@@ -379,6 +434,24 @@ const PreviewPage = ({ currentPage, viewMode, bookStructure, currentPageIndex })
             showTitle={true} 
             title={page?.title} 
           />
+          
+          {/* Auto-pagination overflow message */}
+          {isOverflowing && showSplitMessage && (
+            <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <div className="text-center">
+                <p className="text-sm text-yellow-700 mb-3">
+                  This page has more content than fits. Create a new page to continue?
+                </p>
+                <button
+                  onClick={() => onSplitPage(chapter, page, contentRef.current)}
+                  disabled={isSplitting}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSplitting ? 'Splitting...' : 'Split to New Page'}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
         
         {pageNumber && (
@@ -393,8 +466,8 @@ const PreviewPage = ({ currentPage, viewMode, bookStructure, currentPageIndex })
     );
   };
 
-  const renderAppendixPage = (bookData, pageNumber) => {
-    const appendix = bookData?.appendix;
+  const renderAppendixPage = (appendixData, pageNumber) => {
+    const appendix = appendixData;
     
     return (
       <div 
@@ -422,45 +495,18 @@ const PreviewPage = ({ currentPage, viewMode, bookStructure, currentPageIndex })
           </div>
           
           <div className="flex-1 space-y-6">
-            {appendix?.glossary && appendix.glossary.length > 0 && (
-              <div className="mb-6">
-                <h2 className="text-xl font-semibold mb-4 text-gray-800">Glossary</h2>
-                <div className="space-y-3">
-                  {appendix.glossary.map((item, index) => (
-                    <div key={index} className="border-l-4 border-blue-200 pl-4">
-                      <dt className="font-semibold text-gray-900">{item.term}</dt>
-                      <dd className="text-gray-700 mt-1">{item.definition}</dd>
-                    </div>
-                  ))}
-                </div>
+            {appendix?.sections && appendix.sections.map((section, index) => (
+              <div key={index} className="border-b border-gray-200 pb-6 last:border-b-0">
+                <h3 className="text-lg font-semibold mb-3 text-gray-800">
+                  {section.title || `Section ${index + 1}`}
+                </h3>
+                {section.content && (
+                  <div className="text-gray-700 leading-relaxed">
+                    <BookContentRenderer content={section.content} />
+                  </div>
+                )}
               </div>
-            )}
-            
-            {appendix?.references && appendix.references.length > 0 && (
-              <div className="mb-6">
-                <h2 className="text-xl font-semibold mb-4 text-gray-800">References</h2>
-                <div className="space-y-2">
-                  {appendix.references.map((reference, index) => (
-                    <p key={index} style={{ 
-                      textIndent: '2em',
-                      fontSize: '16px',
-                      lineHeight: '1.6',
-                      fontFamily: 'Georgia, serif',
-                      textAlign: 'justify'
-                    }}>
-                      {index + 1}. {reference}
-                    </p>
-                  ))}
-                </div>
-              </div>
-            )}
-            
-            {appendix?.content && (
-              <div className="mb-6">
-                <h2 className="text-xl font-semibold mb-4 text-gray-800">Additional Information</h2>
-                <BookContentRenderer content={appendix.content} />
-              </div>
-            )}
+            ))}
           </div>
         </div>
         
@@ -512,9 +558,101 @@ const PreviewPage = ({ currentPage, viewMode, bookStructure, currentPageIndex })
     );
   };
 
+  // Helper function to render a single page
+  const renderSinglePage = (page) => {
+    if (!page) return null;
+    
+    const { type, data, pageNumber } = page;
+
+    switch (type) {
+      case 'cover':
+        return renderCoverPage(data.bookData, pageNumber);
+      
+      case 'author':
+        return renderAuthorPage(data.bookData, pageNumber);
+      
+      case 'preface':
+        return renderPrefacePage(data.bookData, pageNumber);
+      
+      case 'toc':
+        return renderTOCPage(data.bookData, data.tocPageIndex, data.totalTOCPages, pageNumber);
+      
+      case 'chapter':
+        return <ChapterPage chapter={data.chapter} pageNumber={pageNumber} />;
+      
+      case 'page':
+        return renderContentPage(data.chapter, data.page, pageNumber);
+      
+      case 'appendix':
+        return renderAppendixPage(data.bookData, pageNumber);
+      
+      default:
+        return renderDefaultPage(pageNumber);
+    }
+  };
+
+  // Dual page mode rendering
+  const renderDualPages = () => {
+    const leftPage = bookStructure[currentPageIndex];
+    const rightPage = bookStructure[currentPageIndex + 1];
+
+    // Special handling for page 1 (cover) - show alone
+    if (currentPageIndex === 0) {
+      return (
+        <div className="flex items-center justify-center w-full h-full transition-all duration-300 ease-in-out">
+          {renderSinglePage(leftPage)}
+        </div>
+      );
+    }
+
+    // For other pages, show spread layout
+    return (
+      <div className="flex items-center justify-center w-full h-full transition-all duration-300 ease-in-out">
+        <div className="flex items-center justify-center gap-8">
+          {/* Left Page */}
+          <div className="flex-shrink-0 transition-transform duration-300 ease-in-out">
+            {renderSinglePage(leftPage)}
+          </div>
+          
+          {/* Center Divider (book binding simulation) */}
+          <div className="w-px h-[800px] bg-gray-300 opacity-50"></div>
+          
+          {/* Right Page */}
+          <div className="flex-shrink-0 transition-transform duration-300 ease-in-out">
+            {renderSinglePage(rightPage)}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Single page mode rendering
+  const renderSinglePageMode = () => {
+    return (
+      <div className="flex items-center justify-center w-full h-full transition-all duration-300 ease-in-out">
+        {renderPageContent()}
+      </div>
+    );
+  };
+
+  // Responsive behavior for mobile
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  const effectiveViewMode = isMobile ? 'single' : viewMode;
+
   return (
-    <div className="flex items-center justify-center w-full h-full">
-      {renderPageContent()}
+    <div className="w-full h-full transition-opacity duration-300 ease-in-out">
+      {effectiveViewMode === 'dual' ? renderDualPages() : renderSinglePageMode()}
     </div>
   );
 };

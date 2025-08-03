@@ -1,9 +1,9 @@
+/* Import modern dark theme */
+@import './styles/modern-dark.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* Import modern dark theme */
-@import './styles/modern-dark.css';
 
 @layer base {
   :root {
@@ -14,6 +14,10 @@
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  html {
+    scroll-behavior: smooth;
   }
 
   body {
@@ -139,6 +143,50 @@
 
 .animate-pulse {
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Landing page animations */
+@keyframes fadeIn {
+  from { 
+    opacity: 0; 
+    transform: translateY(20px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+@keyframes slideUp {
+  from { 
+    opacity: 0; 
+    transform: translateY(40px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+@keyframes float {
+  0%, 100% { 
+    transform: translateY(0px); 
+  }
+  50% { 
+    transform: translateY(-10px); 
+  }
+}
+
+.animate-fade-in { 
+  animation: fadeIn 0.8s ease-out; 
+}
+
+.animate-slide-up { 
+  animation: slideUp 1s ease-out; 
+}
+
+.animate-float { 
+  animation: float 6s ease-in-out infinite; 
 }
 
 /* Hover effects */

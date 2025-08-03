@@ -176,6 +176,13 @@ export const updateBook = async (bookId, updates) => {
       ...updates,
       updatedAt: serverTimestamp()
     });
+    
+    // Return the updated book data
+    const updatedBookSnap = await getDoc(bookRef);
+    return {
+      id: updatedBookSnap.id,
+      ...updatedBookSnap.data()
+    };
   } catch (error) {
     console.error('Error updating book:', error);
     throw error;
@@ -987,4 +994,44 @@ export const getMockBooks = () => {
       ]
     }
   ];
+}; 
+
+// Duplicate a book
+export const duplicateBook = async (bookId) => {
+  try {
+    const originalBook = await getBook(bookId);
+    const duplicatedBook = {
+      ...originalBook,
+      id: undefined, // Remove the original ID
+      title: `${originalBook.title} (Copy)`,
+      status: 'draft',
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    };
+    
+    const newBook = await createBook(originalBook.userId, duplicatedBook);
+    return newBook;
+  } catch (error) {
+    console.error('Error duplicating book:', error);
+    throw error;
+  }
+};
+
+// Export all functions as a single booksService object
+export const booksService = {
+  getBooks: getUserBooks,
+  getBook,
+  getBookWithChapters,
+  createBook,
+  updateBook,
+  deleteBook,
+  duplicateBook,
+  publishBook,
+  createPage,
+  updatePage,
+  createChapter,
+  deleteChapter,
+  deletePage,
+  updateChapter,
+  getMockBooks
 }; 

@@ -22,29 +22,29 @@ const BookEditor = ({ bookTitle, onSwitchToBookBuilder, onSwitchToPreview }) => 
   ];
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen dashboard-container">
       {/* Left Sidebar */}
-      <div className="w-64 bg-white border-r border-gray-200 flex-col">
+      <div className="w-64 sidebar-dark flex-col">
         {/* Action Buttons */}
-        <div className="p-4 border-b border-gray-200">
+        <div className="p-4 border-b border-white/20">
           <button
             onClick={onSwitchToBookBuilder}
-            className="w-full mb-3 px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors flex items-center justify-center"
+            className="btn-primary w-full mb-3 flex items-center justify-center"
           >
             <BookOpen className="w-4 h-4 mr-2" />
             + Book Builder
           </button>
           <div className="space-y-2">
-            <button className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center">
+            <button className="btn-primary w-full flex items-center justify-center">
               <Plus className="w-4 h-4 mr-2" />
               + New Page
             </button>
-            <button className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors flex items-center justify-center">
+            <button className="btn-primary w-full flex items-center justify-center">
               <FileText className="w-4 h-4 mr-2" />
               + New Chapter
             </button>
           </div>
-          <button className="w-full mt-3 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center">
+          <button className="btn-ai w-full mt-3 flex items-center justify-center">
             <LightbulbIcon className="w-4 h-4 mr-2" />
             AI Generate Outline
           </button>
@@ -52,17 +52,17 @@ const BookEditor = ({ bookTitle, onSwitchToBookBuilder, onSwitchToPreview }) => 
 
         {/* Book Content Tree */}
         <div className="flex-1 p-4 overflow-y-auto">
-          <h3 className="font-medium text-gray-900 mb-3">Book Structure</h3>
+          <h3 className="font-medium text-white mb-3">Book Structure</h3>
           <div className="space-y-2">
             {chapters.map((chapter, chapterIndex) => (
               <div key={chapterIndex}>
-                <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                  <span className="text-sm font-medium text-gray-700">{chapter.name}</span>
+                <div className="flex items-center justify-between p-2 bg-white/10 rounded">
+                  <span className="text-sm font-medium text-white">{chapter.name}</span>
                   <div className="flex items-center space-x-1">
-                    <button className="p-1 hover:bg-gray-200 rounded">
+                    <button className="p-1 hover:bg-white/20 rounded text-white">
                       <Plus className="w-3 h-3" />
                     </button>
-                    <button className="p-1 hover:bg-gray-200 rounded text-red-500">
+                    <button className="p-1 hover:bg-white/20 rounded text-red-400">
                       <FileText className="w-3 h-3" />
                     </button>
                   </div>
@@ -70,14 +70,14 @@ const BookEditor = ({ bookTitle, onSwitchToBookBuilder, onSwitchToPreview }) => 
                 {chapter.pages.map((page, pageIndex) => (
                   <div
                     key={pageIndex}
-                    className={`ml-4 p-2 bg-gray-50 cursor-pointer ${
-                      selectedPage === page ? 'bg-blue-50 border-l-2 border-blue-500' : ''
+                    className={`ml-4 p-2 bg-white/10 cursor-pointer ${
+                      selectedPage === page ? 'bg-white/20 border-l-2 border-accent-primary' : ''
                     }`}
                     onClick={() => setSelectedPage(page)}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">{page}</span>
-                      {selectedPage === page && <Star className="w-3 h-3 text-orange-500" />}
+                      <span className="text-sm text-white">{page}</span>
+                      {selectedPage === page && <Star className="w-3 h-3 text-orange-400" />}
                     </div>
                   </div>
                 ))}
@@ -90,43 +90,55 @@ const BookEditor = ({ bookTitle, onSwitchToBookBuilder, onSwitchToPreview }) => 
       {/* Main Content Area */}
       <div className="flex-1 flex-col">
         {/* Top Bar */}
-        <div className="bg-white border-b border-gray-200 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <button className="text-gray-600 hover:text-gray-900">
-                <ArrowLeft className="w-5 h-5" />
-              </button>
-              <h1 className="text-lg font-semibold text-gray-900">{bookTitle}</h1>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <div className="w-32 bg-gray-200 rounded-full h-2">
-                  <div className="bg-blue-600 h-2 rounded-full" style={{ width: '50%' }}></div>
-                </div>
-                <span className="text-sm text-gray-600">Progress</span>
-              </div>
-              <button className="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:text-gray-900">
-                <Lightbulb className="w-4 h-4" />
-                <span>AI Settings</span>
-              </button>
-              <div className="flex items-center space-x-2">
-                <button className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center">
-                  <BarChart3 className="w-4 h-4 mr-2" />
-                  AI Analyzer
-                </button>
-                <button 
-                  onClick={onSwitchToPreview}
-                  className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center"
-                >
-                  <Eye className="w-4 h-4 mr-2" />
-                  Preview
-                </button>
-                <button className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center">
-                  <Download className="w-4 h-4 mr-2" />
-                  Export PDF
-                </button>
-              </div>
-            </div>
+        <div 
+          className="flex items-center justify-between px-6 py-4"
+          style={{ 
+            backgroundColor: '#1e1e2f', 
+            borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+            color: 'white'
+          }}
+        >
+          {/* Left Section - Back Button */}
+          <div className="flex items-center">
+            <button className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors flex items-center">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back
+            </button>
+          </div>
+
+          {/* Center Section - Book Title */}
+          <div className="flex-1 flex justify-center">
+            <h1 className="text-xl font-bold text-white truncate max-w-md">
+              {bookTitle}
+            </h1>
+          </div>
+
+          {/* Right Section - Progress and Action Buttons */}
+          <div className="flex items-center space-x-4">
+            <span className="text-sm text-white">Progress: 0%</span>
+            
+            <button className="px-3 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors flex items-center">
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              AI Settings
+            </button>
+            
+            <button className="px-3 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors flex items-center">
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+              AI Analyzer
+            </button>
+            
+            <button 
+              onClick={onSwitchToPreview}
+              className="px-4 py-2 bg-gradient-to-r from-purple-500 to-blue-600 text-white rounded-lg hover:from-purple-600 hover:to-blue-700 transition-all duration-300 flex items-center shadow-lg"
+            >
+              <Eye className="w-4 h-4 mr-2" />
+              Preview
+            </button>
           </div>
         </div>
 
@@ -135,42 +147,76 @@ const BookEditor = ({ bookTitle, onSwitchToBookBuilder, onSwitchToPreview }) => 
           {/* Page/Chapter Info */}
           <div className="mb-6 space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Page Title</label>
-              <input
-                type="text"
-                value={selectedPage}
-                onChange={(e) => setSelectedPage(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+              <label className="block text-sm font-semibold text-gray-900 mb-3">Page Title</label>
+              <div className="space-y-2">
+                <input
+                  type="text"
+                  value={selectedPage}
+                  onChange={(e) => setSelectedPage(e.target.value)}
+                  maxLength={100}
+                  className={`w-full px-4 py-3 border-2 rounded-xl text-gray-900 placeholder-gray-400 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-purple-500/20 hover:border-gray-300 focus:border-purple-500 ${
+                    selectedPage && selectedPage.length > 80 ? 'border-yellow-300' : 'border-gray-200'
+                  }`}
+                />
+                {selectedPage && (
+                  <div className="flex items-center justify-between text-xs">
+                    <div className="text-gray-500">
+                      {selectedPage.length}/100 characters
+                    </div>
+                    {selectedPage.length > 80 && (
+                      <div className="text-yellow-600">
+                        Page title is quite long and may not display well
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Chapter</label>
-              <input
-                type="text"
-                value={currentChapter}
-                onChange={(e) => setCurrentChapter(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+              <label className="block text-sm font-semibold text-gray-900 mb-3">Chapter</label>
+              <div className="space-y-2">
+                <input
+                  type="text"
+                  value={currentChapter}
+                  onChange={(e) => setCurrentChapter(e.target.value)}
+                  maxLength={100}
+                  className={`w-full px-4 py-3 border-2 rounded-xl text-gray-900 placeholder-gray-400 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-purple-500/20 hover:border-gray-300 focus:border-purple-500 ${
+                    currentChapter && currentChapter.length > 80 ? 'border-yellow-300' : 'border-gray-200'
+                  }`}
+                />
+                {currentChapter && (
+                  <div className="flex items-center justify-between text-xs">
+                    <div className="text-gray-500">
+                      {currentChapter.length}/100 characters
+                    </div>
+                    {currentChapter.length > 80 && (
+                      <div className="text-yellow-600">
+                        Chapter title is quite long and may not display well
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
           {/* Formatting Toolbar */}
-          <div className="mb-4 p-3 bg-gray-50 rounded-md">
+          <div className="mb-4 p-4 bg-gray-50 rounded-xl border border-gray-200">
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
-                <button className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-200">B</button>
-                <button className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-200">I</button>
-                <button className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-200">U</button>
+                <button className="px-3 py-2 border-2 border-gray-200 rounded-lg hover:bg-gray-100 hover:border-gray-300 transition-all duration-300 font-semibold">B</button>
+                <button className="px-3 py-2 border-2 border-gray-200 rounded-lg hover:bg-gray-100 hover:border-gray-300 transition-all duration-300 font-semibold">I</button>
+                <button className="px-3 py-2 border-2 border-gray-200 rounded-lg hover:bg-gray-100 hover:border-gray-300 transition-all duration-300 font-semibold">U</button>
               </div>
               <div className="flex items-center space-x-2">
-                <button className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-200">H1</button>
-                <button className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-200">H2</button>
-                <button className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-200">H3</button>
+                <button className="px-3 py-2 border-2 border-gray-200 rounded-lg hover:bg-gray-100 hover:border-gray-300 transition-all duration-300 font-semibold">H1</button>
+                <button className="px-3 py-2 border-2 border-gray-200 rounded-lg hover:bg-gray-100 hover:border-gray-300 transition-all duration-300 font-semibold">H2</button>
+                <button className="px-3 py-2 border-2 border-gray-200 rounded-lg hover:bg-gray-100 hover:border-gray-300 transition-all duration-300 font-semibold">H3</button>
               </div>
               <div className="flex items-center space-x-2">
-                <button className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-200">• List</button>
-                <button className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-200">1. List</button>
-                <button className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-200">• Numbered List</button>
+                <button className="px-3 py-2 border-2 border-gray-200 rounded-lg hover:bg-gray-100 hover:border-gray-300 transition-all duration-300 font-semibold">• List</button>
+                <button className="px-3 py-2 border-2 border-gray-200 rounded-lg hover:bg-gray-100 hover:border-gray-300 transition-all duration-300 font-semibold">1. List</button>
+                <button className="px-3 py-2 border-2 border-gray-200 rounded-lg hover:bg-gray-100 hover:border-gray-300 transition-all duration-300 font-semibold">• Numbered List</button>
               </div>
             </div>
           </div>

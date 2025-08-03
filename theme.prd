@@ -1,0 +1,202 @@
+## 📘 eBook App UI Design PRD: Purple Gradient Glassmorphism Theme
+
+### 🌈 Theme Overview
+
+* **Design Style**: Modern Glassmorphism with Gradient Accents
+* **Visual Goal**: Balance professionalism with creativity, enhance readability, and highlight AI features
+
+---
+
+### 🎨 Color Palette
+
+#### Primary Gradient
+
+* **Main Gradient**: `linear-gradient(135deg, #667eea 0%, #764ba2 100%)`
+* **Sidebar Gradient**: `linear-gradient(180deg, #2d3748 0%, #1a202c 100%)`
+* **Main Content BG**: `linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%)`
+
+#### Text Colors
+
+* Primary Dark: `#2d3748`
+* Secondary Dark: `#1a202c`
+* Muted: `#718096`
+* Light Muted: `#a0aec0`
+* Body Text: `#4a5568`
+
+#### Interactive
+
+* Primary: `#4299e1`
+* Hover: `#5a67d8`
+* Border Light: `#e2e8f0`
+* Border Medium: `#cbd5e0`
+
+---
+
+### 🔲 Header
+
+* **Background**: `rgba(255, 255, 255, 0.8)`
+* **Effect**: `backdrop-filter: blur(10px)`
+* **Border**: `border-bottom: 1px solid rgba(0, 0, 0, 0.05)`
+
+---
+
+### 🃏 Card Design
+
+#### Main Reading Card
+
+* Background: `#ffffff`
+* Shadow: `0 4px 20px rgba(0, 0, 0, 0.08)`
+* Border Radius: `16px`
+
+#### AI Assistant Card
+
+* Background: `linear-gradient(135deg, #667eea, #764ba2)`
+* Text: `#ffffff`
+* Radius: `16px`
+
+#### Feature Section Cards
+
+* Background: `#ffffff`
+* Shadow: `0 2px 8px rgba(0, 0, 0, 0.05)`
+* Radius: `12px`
+
+#### Feature Buttons
+
+* Background: `#f7fafc`
+* Border: `1px solid #e2e8f0`
+* Text: `#2d3748`
+* Hover: `#edf2f7`
+
+---
+
+### 📚 Sidebar (Left - Navigation)
+
+* Background: `linear-gradient(180deg, #2d3748 0%, #1a202c 100%)`
+* Logo/Text: `#ffffff`
+* Section Titles: `#a0aec0`
+
+#### Navigation Items
+
+* Default: Transparent
+* Hover: `rgba(255, 255, 255, 0.1)`
+* Active: `linear-gradient(135deg, #667eea, #764ba2)` + `0 4px 12px rgba(102, 126, 234, 0.3)` shadow
+
+#### Buttons
+
+* Primary: `#4299e1`
+* Secondary: `rgba(255, 255, 255, 0.1)` + `1px solid rgba(255, 255, 255, 0.2)`
+
+---
+
+### 🧠 Right Sidebar (AI Features)
+
+* Background: `linear-gradient(180deg, #f7fafc 0%, #edf2f7 100%)`
+* Design: Light, clean, accessible
+
+---
+
+### 🔘 Button Styles
+
+#### Primary
+
+* Background: `#4299e1`
+* Text: White
+* Hover: `translateY(-2px)` + shadow
+
+#### AI Generate
+
+* Background: `rgba(255, 255, 255, 0.2)`
+* Hover: `rgba(255, 255, 255, 0.3)`
+
+#### Secondary (New Page)
+
+* Background: `rgba(255, 255, 255, 0.1)`
+* Border: `1px solid rgba(255, 255, 255, 0.2)`
+* Text: White
+
+#### Feature Buttons
+
+* Background: `#f7fafc`
+* Hover BG: `#edf2f7`
+* Hover Border: `#cbd5e0`
+
+#### AI Toggle
+
+* Active: Gradient with white text
+* Inactive: White BG + `#4a5568` text + `1px solid #e2e8f0`
+
+#### Page Nav Buttons
+
+* BG: White
+* Size: `40x40px`
+* Hover: `scale(1.1)` + shadow
+
+---
+
+### ✍️ Content Area Styling
+
+#### Reading Content
+
+* BG: `#ffffff`
+* Card: Radius `16px`, Shadow `0 4px 20px rgba(0, 0, 0, 0.08)`
+* Text: `#2d3748`
+* Font Size: `16px`
+* Line Height: `1.8`
+* Padding: `40px`
+
+#### Typography
+
+* H1: `#1a202c`, Size: `28px`, Margin: `24px`
+* Paragraphs: `#2d3748`, Margin: `20px`
+
+#### Container
+
+* BG: `linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%)`
+* Padding: `0 32px 32px`
+* Height: `calc(100vh - 160px)`
+* Overflow: `auto`
+
+---
+
+### 📝 Input Fields
+
+#### Main Title Input
+
+* BG: `rgba(255, 255, 255, 0.9)`
+* Border: `2px solid rgba(102, 126, 234, 0.2)`
+* Radius: `12px`
+* Text: `#2d3748`, Size: `28px`
+
+#### Chapter Title Input
+
+* Same as above, Font Size: `24px`
+
+#### Subtitle Input
+
+* BG: `rgba(255, 255, 255, 0.8)`
+* Border: `1px solid rgba(113, 128, 150, 0.3)`
+* Radius: `8px`
+* Text: `#718096`, Size: `14px`
+
+#### Focus State
+
+* Border: `#667eea`
+* BG: `rgba(255, 255, 255, 0.95)`
+* Shadow: `0 0 0 3px rgba(102, 126, 234, 0.1)`
+* Text: Darkens to `#2d3748`
+
+#### Placeholder Colors
+
+* Title: `#a0aec0`
+* Subtitle: `#cbd5e0`
+
+---
+
+### 🎯 Final Notes
+
+* Use consistent blur, transparency, and subtle shadow to preserve glassmorphism feel.
+* Use gradient buttons and cards to highlight AI elements.
+* Maintain strong contrast and padding for readability.
+* Ensure mobile responsiveness with container padding and scroll behavior.
+
+This PRD defines the UI system for a clean, modern, AI-first eBook writing platform.

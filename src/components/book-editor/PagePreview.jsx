@@ -7,6 +7,7 @@ const PagePreview = ({
   onExitPreview, 
   viewType = 'page' 
 }) => {
+  console.log('PagePreview - Rendering with props:', { pageTitle, content, viewType });
   // Handle ESC key to exit preview
   useEffect(() => {
     const handleKeyDown = (event) => {
@@ -22,12 +23,15 @@ const PagePreview = ({
   }, [onExitPreview]);
 
   // Only show preview for page view type
-  if (viewType !== 'page') {
-    return null;
-  }
+  console.log('PagePreview - viewType check:', viewType);
+  // Temporarily allow all view types for testing
+  // if (viewType !== 'page') {
+  //   console.log('PagePreview - Not showing preview due to viewType:', viewType);
+  //   return null;
+  // }
 
   return (
-    <div className="fixed inset-0 bg-gray-100 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-gray-100 flex items-center justify-center z-[9999]">
       {/* Header with exit button */}
       <div className="absolute top-4 left-4 z-10">
         <button
@@ -101,10 +105,6 @@ const PagePreview = ({
                 <div 
                   dangerouslySetInnerHTML={{ 
                     __html: content
-                      .replace(/\n\n/g, '</p><p style="margin-top: 1.5em; text-indent: 2em; max-width: 100%; word-wrap: break-word; overflow-wrap: break-word; word-break: break-word;">')
-                      .replace(/\n/g, ' ')
-                      .replace(/^/, '<p style="text-indent: 2em; max-width: 100%; word-wrap: break-word; overflow-wrap: break-word; word-break: break-word;">')
-                      .replace(/$/, '</p>')
                   }} 
                 />
               ) : (

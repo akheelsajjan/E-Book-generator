@@ -1,25 +1,105 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Lightbulb, BarChart3, Eye, Download, Plus, BookOpen, FileText, Star, Zap, Lightbulb as LightbulbIcon } from 'lucide-react';
-import { updatePage, updateChapter, createPage, createChapter, deleteChapter, deletePage } from '../../services/booksService';
+import { useAuth } from '../../hooks/useAuth.jsx';
+import { ArrowLeft, Eye, User, Settings, Upload, ChevronDown, LogOut, CreditCard, Key, BookOpen, Loader2 } from 'lucide-react';
 import EditorSidebar from './EditorSidebar';
 import EditorContent from './EditorContent';
 import EditorAIAssistant from './EditorAIAssistant';
-import PagePreview from './PagePreview';
+import ProgressTracker from '../shared/ProgressTracker';
+import { 
+  updateBook, 
+  createChapter, 
+  createPage, 
+  updatePage, 
+  deleteChapter, 
+  deletePage, 
+  updateChapter 
+} from '../../services/booksService';
+import aiActionService from '../../services/aiActionService';
 
 const EditorView = ({
   book,
   setBook,
-  aiSettings,
-  aiDropdownOpen,
-  setAiDropdownOpen,
-  aiDropdownRef,
   calculateProgress,
-  handleAiSettingChange,
-  onSwitchToBookBuilder,
-  AI_FEATURES
+  onSwitchToBookBuilder
 }) => {
   const navigate = useNavigate();
+  const { user, signOutUser } = useAuth();
+  
+  // User profile dropdown state
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const userDropdownRef = useRef(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (userDropdownRef.current && !userDropdownRef.current.contains(event.target)) {
+        setShowUserDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const getUserInitial = () => {
+    if (user?.displayName) {
+      return user.displayName.charAt(0).toUpperCase();
+    }
+    if (user?.email) {
+      return user.email.charAt(0).toUpperCase();
+    }
+    return 'A';
+  };
+
+  const getUserName = () => {
+    return user?.displayName || user?.email?.split('@')[0] || 'User';
+  };
+
+  const handleApiKeysManage = () => {
+    setShowUserDropdown(false);
+    navigate('/settings/api-keys');
+  };
+
+  const handleSettingsConfigure = () => {
+    setShowUserDropdown(false);
+    // TODO: Navigate to general settings page
+    console.log('Settings clicked');
+  };
+
+  const handleSubscriptionUpgrade = () => {
+    setShowUserDropdown(false);
+    // TODO: Navigate to subscription page
+    console.log('Upgrade clicked');
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await signOutUser();
+      setShowUserDropdown(false);
+      navigate('/login');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+  
+  // Loading states for different operations
+  const [isSaving, setIsSaving] = useState(false);
+  const [isCreatingChapter, setIsCreatingChapter] = useState(false);
+  const [isCreatingPage, setIsCreatingPage] = useState(false);
+  const [isDeletingChapter, setIsDeletingChapter] = useState(false);
+  const [isDeletingPage, setIsDeletingPage] = useState(false);
+  const [deletingItemId, setDeletingItemId] = useState(null); // Track which item is being deleted
+  
+  // Feedback states
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [showErrorMessage, setShowErrorMessage] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  
+  // State for dynamic guidance messages
+  const [dynamicMessage, setDynamicMessage] = useState('');
+  
   // Debug logging
   console.log('EditorView - Book data received:', book);
   console.log('EditorView - Book chapters:', book?.chapters);
@@ -33,7 +113,7 @@ const EditorView = ({
   console.log('EditorView - First page:', firstPage);
 
   // Editor state - initialize from server data
-  const [selectedPage, setSelectedPage] = useState(firstPage?.title || '');
+  const [selectedPage, setSelectedPage] = useState(firstPage?.id || '');
   const [currentChapter, setCurrentChapter] = useState(firstChapter?.title || '');
   const [content, setContent] = useState(firstPage?.content || '');
   const [pageTitle, setPageTitle] = useState(firstPage?.title || '');
@@ -48,16 +128,51 @@ const EditorView = ({
   const [lastSaved, setLastSaved] = useState(new Date());
   const [pageRefreshed, setPageRefreshed] = useState(false);
 
-  // AI state
-  const [aiTab, setAiTab] = useState('writing');
-  const [aiPrompt, setAiPrompt] = useState('');
+
 
   // Preview mode state
   const [previewMode, setPreviewMode] = useState(false);
 
+  // Right sidebar state
+  const [aiSettings, setAiSettings] = useState({
+    aiWriter: true,
+    aiSuggestions: true,
+    aiAnalysis: true
+  });
+  const [aiTab, setAiTab] = useState('writing');
+  const [aiPrompt, setAiPrompt] = useState('');
+
+  // AI Toolbar state
+  const [selectedAiCategory, setSelectedAiCategory] = useState('writing');
+  const [selectedAiTools, setSelectedAiTools] = useState({
+    // Writing Tools
+    aiWriter: true,
+    continueWriting: true,
+    generatePageSummary: false,
+    
+    // Clarity & Style
+    refactorText: false,
+    enhanceStyle: false,
+    simplifyLanguage: false,
+    convertPOV: false,
+    
+    // Content Helpers
+    addExamples: false,
+    insertFacts: false,
+    expandToList: false,
+    
+    // Other
+    translate: false,
+    plagiarismCheck: false
+  });
+
+
+
   // Update state when book data changes
   useEffect(() => {
     console.log('EditorView - Book data changed, updating state');
+    console.log('EditorView - Current selectedPage:', selectedPage);
+    console.log('EditorView - Current currentPageId:', currentPageId);
     
     const firstChapter = book?.chapters?.[0];
     const firstPage = firstChapter?.pages?.[0];
@@ -65,12 +180,19 @@ const EditorView = ({
     console.log('EditorView - Updated first chapter:', firstChapter);
     console.log('EditorView - Updated first page:', firstPage);
 
+    // Only update state if no page is currently selected OR if this is the initial load
+    // This prevents overriding the selection when a new page is created, but allows initial setup
+    if (selectedPage && currentPageId && book?.chapters?.length > 0) {
+      console.log('EditorView - Page already selected, skipping state reset');
+      return;
+    }
+
     if (firstPage) {
-      setSelectedPage(firstPage.title);
+      setSelectedPage(firstPage.id);
       setPageTitle(firstPage.title);
       setContent(firstPage.content || '');
       setCurrentPageId(firstPage.id);
-      setShowTitleField(false);
+      setShowTitleField(firstPage.title && firstPage.title.trim().length > 0);
     }
 
     if (firstChapter) {
@@ -78,12 +200,38 @@ const EditorView = ({
       setChapterTitle(firstChapter.title);
       setCurrentChapterId(firstChapter.id);
     }
-  }, [book]);
+  }, [book, selectedPage, currentPageId]);
+
+  // Helper functions for feedback
+  const showSuccess = (message) => {
+    setSuccessMessage(message);
+    setShowSuccessMessage(true);
+    setTimeout(() => setShowSuccessMessage(false), 3000);
+  };
+
+  const showError = (message) => {
+    setErrorMessage(message);
+    setShowErrorMessage(true);
+    setTimeout(() => setShowErrorMessage(false), 5000);
+  };
 
   // Removed auto-save functionality - save only happens on button click
 
   // Handle save
   const handleSave = async () => {
+    if (isSaving) return; // Prevent multiple saves
+    
+    // Check weight limit before saving
+    const currentWeight = calculateWeightedLength(content);
+    const maxWeight = getCharacterLimit();
+    
+    if (currentWeight > maxWeight) {
+      showError(`Cannot save: Content exceeds weight limit. Current: ${currentWeight}, Limit: ${maxWeight}`);
+      setIsSaving(false);
+      return;
+    }
+    
+    setIsSaving(true);
     try {
       console.log('Saving book data to Firestore...');
       
@@ -184,7 +332,7 @@ const EditorView = ({
             isVisible: true
           };
           
-          const newPageId = await createPage(book.id, currentChapterData.id, pageData);
+          const newPageId = await createPage(book.id, currentChapterData.id, pageData); 
           
           // Update the page ID in local state
           const updatedChapters = book.chapters.map(chapter => {
@@ -192,8 +340,8 @@ const EditorView = ({
               return {
                 ...chapter,
                 pages: chapter.pages.map(page => {
-                  if (page.title === selectedPage) {
-                    return { ...page, id: newPageId };
+                  if (page.id === currentPageId) {
+                    return { ...page, id: newPageId }; // Keep original ID if createPage is not available
                   }
                   return page;
                 })
@@ -206,6 +354,9 @@ const EditorView = ({
             ...book,
             chapters: updatedChapters
           });
+          
+          // Update the current page ID to the new Firestore ID
+          setCurrentPageId(newPageId);
           
           console.log('Page created successfully in Firestore');
         } else {
@@ -223,10 +374,17 @@ const EditorView = ({
       // Update the book state
       setBook(updatedBook);
       
-      // Update selectedPage and currentChapter to the new titles after successful save
-      setSelectedPage(pageTitle);
+      // Keep the current page selected by ID, not by title
+      // This prevents highlighting issues and redirects
+      setSelectedPage(currentPageId);
       setCurrentChapter(chapterTitle);
       setLastSaved(new Date());
+      
+      console.log('Save completed - maintaining selection:', {
+        selectedPage: currentPageId,
+        currentChapter: chapterTitle,
+        pageTitle: pageTitle
+      });
       
       // Refresh the current page data to ensure we're viewing the latest content
       console.log('Refreshing current page data after save...');
@@ -264,8 +422,12 @@ const EditorView = ({
       }
       
       console.log('Book data updated successfully in Firestore');
+      showSuccess('Changes saved successfully!');
     } catch (error) {
-      console.error('Error saving book:', error);
+      console.error('Error saving book data:', error);
+      showError('Failed to save changes. Please try again.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -294,12 +456,12 @@ const EditorView = ({
     console.log('EditorView - Found chapter data:', selectedChapterData);
 
     if (selectedPageData) {
-      setSelectedPage(selectedPageData.title);
+      setSelectedPage(selectedPageData.id);
       setPageTitle(selectedPageData.title);
       setContent(selectedPageData.content || '');
       setCurrentPageId(selectedPageData.id);
-      // Reset title field state when switching pages
-      setShowTitleField(false);
+      // Show title field if page has a title, otherwise hide it
+      setShowTitleField(selectedPageData.title && selectedPageData.title.trim().length > 0);
       
       if (selectedChapterData) {
         setCurrentChapter(selectedChapterData.title);
@@ -310,35 +472,183 @@ const EditorView = ({
   };
 
   // Character limits based on whether page has a title
+  // Weighted scoring system for content limits
+  const calculateWeightedLength = (text) => {
+    if (!text) return 0;
+    
+    let weight = 0;
+    const lines = text.split('\n');
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const nextLine = lines[i + 1];
+      
+      // Check for paragraph breaks (double line breaks)
+      if (line.trim() === '' && nextLine && nextLine.trim() === '') {
+        weight += 24; // Paragraph end
+        continue;
+      }
+      
+      // Check for single line breaks
+      if (line.trim() === '') {
+        weight += 12; // Line break
+        continue;
+      }
+      
+      // Check for markdown headings
+      if (line.startsWith('# ')) {
+        weight += 30; // H1 heading
+        weight += line.length - 2; // Add remaining characters
+        continue;
+      }
+      if (line.startsWith('## ')) {
+        weight += 30; // H2 heading
+        weight += line.length - 3; // Add remaining characters
+        continue;
+      }
+      if (line.startsWith('### ')) {
+        weight += 30; // H3 heading
+        weight += line.length - 4; // Add remaining characters
+        continue;
+      }
+      
+      // Check for list bullets
+      if (line.trim().startsWith('- ') || line.trim().startsWith('• ')) {
+        weight += 10; // List bullet
+        weight += line.length; // Add all characters including bullet
+        continue;
+      }
+      
+      // Normal text - count each character
+      for (let j = 0; j < line.length; j++) {
+        const char = line[j];
+        if (char === ' ') {
+          weight += 1; // Space
+        } else {
+          weight += 1; // Normal character
+        }
+      }
+    }
+    
+    return weight;
+  };
+
   const getCharacterLimit = () => {
-    const hasTitle = pageTitle && pageTitle.trim().length > 0;
-    return hasTitle ? 1675 : 2000;
+    const BASE_WEIGHT = 1500;
+    
+    // If no title or empty title, return base weight
+    if (!pageTitle || pageTitle.trim() === "") {
+      return BASE_WEIGHT;
+    }
+
+    // Calculate title weight based on length
+    // Each character in title takes approximately 2x space due to larger font size
+    const titleWeight = Math.min(pageTitle.length * 2, 500); // Cap at 500 to prevent negative limits
+    
+    // Return dynamic weight limit
+    const dynamicLimit = BASE_WEIGHT - titleWeight;
+    
+    // Ensure minimum limit of 800 weight
+    return Math.max(dynamicLimit, 800);
   };
 
   // Preview mode handlers
   const handlePreviewClick = () => {
-    setPreviewMode(true);
+    // Navigate to the preview screen
+    navigate(`/preview/${book.id}`);
   };
 
   const handleExitPreview = () => {
     setPreviewMode(false);
   };
 
+
+
   // Handle content change
   const handleContentChange = (e) => {
     const newContent = e.target.value;
-    const maxChars = getCharacterLimit();
+    const maxWeight = getCharacterLimit();
     
-    // Only allow content within the character limit
-    if (newContent.length <= maxChars) {
-      setContent(newContent);
+    // The EditorContent component now handles limit enforcement
+    // We trust that the content passed here is within limits
+    setContent(newContent);
+    
+    // Update the page data in the book state so sidebar reflects the change
+    if (currentPageId && currentChapterId) {
+      const updatedChapters = book.chapters.map(chapter => {
+        if (chapter.id === currentChapterId) {
+          return {
+            ...chapter,
+            pages: chapter.pages.map(page => {
+              if (page.id === currentPageId) {
+                return {
+                  ...page,
+                  content: newContent
+                };
+              }
+              return page;
+            })
+          };
+        }
+        return chapter;
+      });
+      setBook({
+        ...book,
+        chapters: updatedChapters
+      });
+    }
+  };
+
+  // Handle book metadata updates
+  const handleUpdateBookMetadata = async (updatedBook) => {
+    try {
+      setBook(updatedBook);
+      
+      // Save to Firestore
+      await updateBook(book.id, {
+        shortDescription: updatedBook.shortDescription,
+        fullDescription: updatedBook.fullDescription,
+        tags: updatedBook.tags,
+        tone: updatedBook.tone,
+        publishedYear: updatedBook.publishedYear
+      });
+      
+      showSuccess('Book metadata updated successfully');
+    } catch (error) {
+      console.error('Error updating book metadata:', error);
+      showError('Failed to update book metadata');
     }
   };
 
   // Handle title change
   const handleTitleChange = (e) => {
-    setPageTitle(e.target.value);
-    // Don't update selectedPage here - keep the original page title for finding the page
+    const newTitle = e.target.value;
+    setPageTitle(newTitle);
+    
+    // Update the page data in the book state so sidebar reflects the change
+    if (currentPageId && currentChapterId) {
+      const updatedChapters = book.chapters.map(chapter => {
+        if (chapter.id === currentChapterId) {
+          return {
+            ...chapter,
+            pages: chapter.pages.map(page => {
+              if (page.id === currentPageId) {
+                return {
+                  ...page,
+                  title: newTitle
+                };
+              }
+              return page;
+            })
+          };
+        }
+        return chapter;
+      });
+      setBook({
+        ...book,
+        chapters: updatedChapters
+      });
+    }
   };
 
   // Handle chapter change
@@ -349,6 +659,9 @@ const EditorView = ({
 
   // Add new page
   const addNewPage = async (chapterId = null) => {
+    if (isCreatingPage) return; // Prevent multiple page creations
+    
+    setIsCreatingPage(true);
     try {
       console.log('Adding new page...');
       
@@ -397,7 +710,7 @@ const EditorView = ({
       }
       // Generate unique page title
       const pageNumber = (targetChapter.pages?.length || 0) + 1;
-      const pageTitleUnique = `Page ${pageNumber}`;
+      const pageTitleUnique = '';
       // Create page data for Firestore
       const pageData = {
         title: pageTitleUnique,
@@ -420,7 +733,8 @@ const EditorView = ({
         isVisible: true
       };
       // Create page in Firestore
-      const newPageId = await createPage(book.id, targetChapter.id, pageData);
+      const newPageId = await createPage(book.id, targetChapter.id, pageData); 
+      
       // Create page object for local state
       const newPage = {
         id: newPageId,
@@ -440,21 +754,36 @@ const EditorView = ({
         ...book,
         chapters: updatedChapters
       });
+      
       // Switch to the newly created page
-      setSelectedPage(newPage.title);
+      setSelectedPage(newPage.id);
       setPageTitle(newPage.title);
       setContent('');
       setCurrentPageId(newPage.id);
       setCurrentChapterId(targetChapter.id);
-      setShowTitleField(false);
-      console.log('New page added successfully and switched to it');
+      setCurrentChapter(targetChapter.title);
+      setChapterTitle(targetChapter.title);
+      setShowTitleField(true);
+      
+      // Add a small delay to ensure state updates are processed
+      setTimeout(() => {
+        console.log('New page added successfully and switched to it');
+        console.log('Current selected page ID:', newPage.id);
+        console.log('Current page title:', newPage.title);
+        console.log('Current content:', '');
+      }, 100);
     } catch (error) {
       console.error('Error adding new page:', error);
+    } finally {
+      setIsCreatingPage(false);
     }
   };
 
   // Add new chapter
   const addNewChapter = async () => {
+    if (isCreatingChapter) return; // Prevent multiple chapter creations
+    
+    setIsCreatingChapter(true);
     try {
       console.log('Adding new chapter with default page...');
       
@@ -506,10 +835,11 @@ const EditorView = ({
         estimatedReadingTime: 0
       };
       // Create chapter in Firestore
-      const newChapterId = await createChapter(book.id, chapterData);
+      const newChapterId = await createChapter(book.id, chapterData); 
+      
       // Create default page data for Firestore
       const pageData = {
-        title: 'Page 1',
+        title: '',
         content: 'Start writing your first page here...!!',
         pageType: 'text',
         order: 1,
@@ -529,7 +859,8 @@ const EditorView = ({
         isVisible: true
       };
       // Create default page in Firestore
-      const newPageId = await createPage(book.id, newChapterId, pageData);
+      const newPageId = await createPage(book.id, newChapterId, pageData); 
+      
       // Create chapter object with default page for local state
       const newChapter = {
         id: newChapterId,
@@ -544,23 +875,37 @@ const EditorView = ({
         ...book,
         chapters: [...(book.chapters || []), newChapter]
       });
+      
       // Switch to the newly created chapter and its first page
       setCurrentChapter(newChapter.title);
       setChapterTitle(newChapter.title);
-      setSelectedPage(newChapter.pages[0].title);
+      setSelectedPage(newChapter.pages[0].id);
       setPageTitle(newChapter.pages[0].title);
       setContent(newChapter.pages[0].content);
       setCurrentPageId(newChapter.pages[0].id);
       setCurrentChapterId(newChapter.id);
-      setShowTitleField(false);
-      console.log('New chapter with default page added successfully and switched to it');
+      setShowTitleField(true);
+      
+      // Add a small delay to ensure state updates are processed
+      setTimeout(() => {
+        console.log('New chapter with default page added successfully and switched to it');
+        console.log('Current selected page ID:', newChapter.pages[0].id);
+        console.log('Current page title:', newChapter.pages[0].title);
+        console.log('Current content:', newChapter.pages[0].content);
+      }, 100);
     } catch (error) {
       console.error('Error adding new chapter:', error);
+    } finally {
+      setIsCreatingChapter(false);
     }
   };
 
   // Delete chapter
   const handleDeleteChapter = async (chapterId) => {
+    if (isDeletingChapter) return; // Prevent multiple chapter deletions
+    
+    setIsDeletingChapter(true);
+    setDeletingItemId(chapterId);
     try {
       console.log('Deleting chapter:', chapterId);
       
@@ -580,7 +925,7 @@ const EditorView = ({
       // Delete all pages in the chapter from Firestore first
       for (const page of chapterToDelete.pages || []) {
         try {
-          await deletePage(book.id, chapterId, page.id);
+          await deletePage(book.id, chapterId, page.id); 
           console.log('Deleted page:', page.id);
         } catch (error) {
           console.error('Error deleting page:', page.id, error);
@@ -588,7 +933,7 @@ const EditorView = ({
       }
       
       // Delete the chapter from Firestore
-      await deleteChapter(book.id, chapterId);
+      await deleteChapter(book.id, chapterId); 
       console.log('Deleted chapter from Firestore');
       
       // Update local state
@@ -605,7 +950,7 @@ const EditorView = ({
         setChapterTitle(firstChapter.title);
         if (firstChapter.pages.length > 0) {
           const firstPage = firstChapter.pages[0];
-          setSelectedPage(firstPage.title);
+          setSelectedPage(firstPage.id);
           setPageTitle(firstPage.title);
           setContent(firstPage.content || '');
         } else {
@@ -619,11 +964,18 @@ const EditorView = ({
       console.log('Chapter deleted successfully');
     } catch (error) {
       console.error('Error deleting chapter:', error);
+    } finally {
+      setIsDeletingChapter(false);
+      setDeletingItemId(null);
     }
   };
 
   // Delete page
   const handleDeletePage = async (chapterId, pageId) => {
+    if (isDeletingPage) return; // Prevent multiple page deletions
+    
+    setIsDeletingPage(true);
+    setDeletingItemId(pageId);
     try {
       console.log('Deleting page:', pageId, 'from chapter:', chapterId);
       
@@ -641,7 +993,7 @@ const EditorView = ({
       }
       
       // Delete the page from Firestore
-      await deletePage(book.id, chapterId, pageId);
+      await deletePage(book.id, chapterId, pageId); 
       console.log('Page deleted from Firestore');
       
       // Check if this is the last page in the chapter
@@ -658,7 +1010,7 @@ const EditorView = ({
         for (const remainingPage of chapter.pages) {
           if (remainingPage.id !== pageId) { // Skip the page we already deleted
             try {
-              await deletePage(book.id, chapterId, remainingPage.id);
+              await deletePage(book.id, chapterId, remainingPage.id); 
               console.log('Deleted remaining page:', remainingPage.id);
             } catch (error) {
               console.error('Error deleting remaining page:', remainingPage.id, error);
@@ -667,7 +1019,7 @@ const EditorView = ({
         }
         
         // Delete the chapter from Firestore
-        await deleteChapter(book.id, chapterId);
+        await deleteChapter(book.id, chapterId); 
         console.log('Chapter deleted from Firestore');
         
         // Update local state - remove the entire chapter
@@ -684,7 +1036,7 @@ const EditorView = ({
           setChapterTitle(firstChapter.title);
           if (firstChapter.pages.length > 0) {
             const firstPage = firstChapter.pages[0];
-            setSelectedPage(firstPage.title);
+            setSelectedPage(firstPage.id);
             setPageTitle(firstPage.title);
             setContent(firstPage.content || '');
           } else {
@@ -714,7 +1066,7 @@ const EditorView = ({
         const currentChapter = updatedChapters.find(ch => ch.id === chapterId);
         if (currentChapter && currentChapter.pages.length > 0) {
           const firstPage = currentChapter.pages[0];
-          setSelectedPage(firstPage.title);
+          setSelectedPage(firstPage.id);
           setPageTitle(firstPage.title);
           setContent(firstPage.content || '');
         }
@@ -723,86 +1075,198 @@ const EditorView = ({
       console.log('Page deleted successfully');
     } catch (error) {
       console.error('Error deleting page:', error);
+    } finally {
+      setIsDeletingPage(false);
+      setDeletingItemId(null);
     }
   };
 
   return (
     <div className="h-screen flex flex-col bg-gray-50">
       {/* Header Bar - Full Width */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+      <div 
+        className="flex items-center justify-between px-6 py-4"
+        style={{ 
+          backgroundColor: '#1e1e2f', 
+          borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+          color: 'white'
+        }}
+      >
+        {/* Left Section - Back Button and Title */}
         <div className="flex items-center space-x-4">
           <button 
             onClick={() => navigate('/dashboard')}
-            className="text-gray-600 hover:text-gray-900 transition-colors"
+            className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors flex items-center"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back
           </button>
-          <h1 className="text-xl font-semibold text-gray-900">{book.title}</h1>
+          <h1 className="text-xl font-bold text-white truncate max-w-md">{book.title}</h1>
         </div>
 
+        {/* Right Section - Action Buttons and User Profile */}
         <div className="flex items-center space-x-4">
-          {/* Progress Bar */}
-          <div className="flex items-center space-x-2">
-            <span className="text-sm text-gray-600">Progress:</span>
-            <div className="w-32 bg-gray-200 rounded-full h-2">
-              <div 
-                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${calculateProgress()}%` }}
-              ></div>
-            </div>
-            <span className="text-sm font-medium text-gray-700">{calculateProgress()}%</span>
-          </div>
+          {/* Book Progress Button */}
+          <ProgressTracker 
+            book={book}
+            onPublish={handlePreviewClick}
+          />
           
-          {/* AI Settings Dropdown */}
-          <div className="relative" ref={aiDropdownRef}>
+          <button 
+            onClick={handlePreviewClick}
+            className="px-4 py-2 bg-gradient-to-r from-purple-500 to-blue-600 text-white rounded-lg hover:from-purple-600 hover:to-blue-700 transition-all duration-300 flex items-center shadow-lg"
+          >
+            <Eye className="w-4 h-4 mr-2" />
+            Preview
+          </button>
+
+          {/* User Profile Dropdown */}
+          <div className="relative flex-shrink-0" ref={userDropdownRef}>
             <button
-              className="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:text-gray-900"
-              onClick={() => setAiDropdownOpen(v => !v)}
+              onClick={() => setShowUserDropdown(!showUserDropdown)}
+              className="flex items-center space-x-3 p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-all duration-200 border border-white/20 hover:border-white/30"
             >
-              <Lightbulb className="w-4 h-4" />
-              <span>AI Settings</span>
+              {/* User Info */}
+              <div className="text-right hidden sm:block">
+                <p className="text-sm font-medium text-white">
+                  {getUserName()}
+                </p>
+                <p className="text-xs text-gray-300">Author</p>
+              </div>
+              
+              {/* User Avatar */}
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-lg shadow-lg border-2 border-white/20 hover:border-white/30 transition-all duration-200">
+                {getUserInitial()}
+              </div>
+              
+              {/* Dropdown Arrow */}
+              <ChevronDown className={`w-4 h-4 text-white transition-transform duration-200 ${showUserDropdown ? 'rotate-180' : ''}`} />
             </button>
-            {aiDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50 p-3">
-                <div className="mb-3">
-                  <h4 className="font-semibold text-gray-900 mb-2">AI Features</h4>
-                  <div className="space-y-2">
-                    {AI_FEATURES.map((feature) => (
-                      <label key={feature.key} className="flex items-center px-2 py-2 cursor-pointer hover:bg-gray-50 rounded">
-                        <input
-                          type="checkbox"
-                          checked={aiSettings[feature.key]}
-                          onChange={() => handleAiSettingChange(feature.key)}
-                          className="mr-3 w-4 h-4 text-purple-600"
-                        />
-                        <span className="text-sm text-gray-700">{feature.icon} {feature.label}</span>
-                      </label>
-                    ))}
+
+            {/* Dropdown Menu */}
+            {showUserDropdown && (
+              <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden z-50">
+                {/* Header */}
+                <div className="p-4 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-xl shadow-lg">
+                      {getUserInitial()}
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900">{getUserName()}</h3>
+                      <p className="text-sm text-gray-600">{user?.email}</p>
+                    </div>
                   </div>
+                </div>
+
+                {/* Menu Items */}
+                <div className="py-2">
+                  {/* Reader Mode Switch */}
+                  <div className="px-4 py-3 hover:bg-gray-50 transition-colors duration-200">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
+                        <BookOpen className="w-4 h-4 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-medium text-gray-900">Switch to Reader Mode</h4>
+                        <p className="text-sm text-gray-600">Browse and read books</p>
+                      </div>
+                      <button 
+                        onClick={() => {
+                          setShowUserDropdown(false);
+                          navigate('/main');
+                        }}
+                        className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                      >
+                        Switch
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Divider */}
+                  <div className="border-t border-gray-200 my-2"></div>
+
+                  {/* Subscription Plan Section */}
+                  <div className="px-4 py-3 hover:bg-gray-50 transition-colors duration-200">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center">
+                        <CreditCard className="w-4 h-4 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-medium text-gray-900">Subscription Plan</h4>
+                        <p className="text-sm text-gray-600">Free Plan</p>
+                      </div>
+                      <button 
+                        onClick={handleSubscriptionUpgrade}
+                        className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                      >
+                        Upgrade
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* API Keys Section */}
+                  <div className="px-4 py-3 hover:bg-gray-50 transition-colors duration-200">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center">
+                        <Key className="w-4 h-4 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-medium text-gray-900">API Keys</h4>
+                        <p className="text-sm text-gray-600">Manage your API keys</p>
+                      </div>
+                      <button
+                        onClick={handleApiKeysManage}
+                        className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                      >
+                        Manage
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Settings Section */}
+                  <div className="px-4 py-3 hover:bg-gray-50 transition-colors duration-200">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 bg-gradient-to-br from-gray-500 to-gray-600 rounded-lg flex items-center justify-center">
+                        <Settings className="w-4 h-4 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-medium text-gray-900">Settings</h4>
+                        <p className="text-sm text-gray-600">Account preferences</p>
+                      </div>
+                      <button
+                        onClick={handleSettingsConfigure}
+                        className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                      >
+                        Configure
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Divider */}
+                  <div className="border-t border-gray-200 my-2"></div>
+
+                  {/* Sign Out */}
+                  <button
+                    onClick={handleSignOut}
+                    className="w-full px-4 py-3 flex items-center space-x-3 hover:bg-red-50 transition-colors duration-200 text-left"
+                  >
+                    <div className="w-8 h-8 bg-gradient-to-br from-red-500 to-red-600 rounded-lg flex items-center justify-center">
+                      <LogOut className="w-4 h-4 text-white" />
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-gray-900">Sign Out</h4>
+                      <p className="text-sm text-gray-600">Log out of your account</p>
+                    </div>
+                  </button>
                 </div>
               </div>
             )}
           </div>
-          
-          <button className="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:text-gray-900">
-            <BarChart3 className="w-4 h-4 mr-2" />
-            AI Analyzer
-          </button>
-          {book?.viewType === 'page' && (
-            <button 
-              className="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:text-gray-900"
-              onClick={handlePreviewClick}
-            >
-              <Eye className="w-4 h-4 mr-2" />
-              Preview
-            </button>
-          )}
-          <button className="flex items-center space-x-2 px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
-            <Download className="w-4 h-4 mr-2" />
-            Export PDF
-          </button>
         </div>
       </div>
+
+
 
       {/* Main Content Area */}
       <div className="flex-1 flex overflow-hidden">
@@ -810,48 +1274,136 @@ const EditorView = ({
         <EditorSidebar
           book={book}
           selectedPage={selectedPage}
+          selectedChapter={currentChapter}
           onPageSelect={handlePageSelect}
           onAddNewPage={addNewPage}
           onAddNewChapter={addNewChapter}
           onDeleteChapter={handleDeleteChapter}
           onDeletePage={handleDeletePage}
           onSwitchToBookBuilder={onSwitchToBookBuilder}
+          isCreatingChapter={isCreatingChapter}
+          isCreatingPage={isCreatingPage}
+          isDeletingChapter={isDeletingChapter}
+          isDeletingPage={isDeletingPage}
+          deletingItemId={deletingItemId}
         />
 
         {/* Center Content */}
-        <div className="flex-1 flex-col">
+        <div className="flex-1 flex-col bg-white">
+          {/* AI Tools Toolbar - Constrained to content area */}
+          <div className="bg-white border-b border-gray-200 shadow-sm">
+            <div className="max-w-4xl mx-auto px-6 py-3">
+              <div className="flex gap-x-2 justify-center">
+                <button
+                  onClick={() => setSelectedAiCategory('writing')}
+                  className={`px-4 py-2 rounded-lg transition-all duration-200 flex items-center space-x-2 ${
+                    selectedAiCategory === 'writing'
+                      ? 'bg-purple-100 text-purple-700 border-2 border-purple-300 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50 border-2 border-transparent'
+                  }`}
+                >
+                  <span className="text-lg">✍️</span>
+                  <span className="font-medium">Writing Tools</span>
+                </button>
+                
+                <button
+                  onClick={() => setSelectedAiCategory('clarity')}
+                  className={`px-4 py-2 rounded-lg transition-all duration-200 flex items-center space-x-2 ${
+                    selectedAiCategory === 'clarity'
+                      ? 'bg-blue-100 text-blue-700 border-2 border-blue-300 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50 border-2 border-transparent'
+                  }`}
+                >
+                  <span className="text-lg">🧠</span>
+                  <span className="font-medium">Editing Aids</span>
+                </button>
+                
+                <button
+                  onClick={() => setSelectedAiCategory('content')}
+                  className={`px-4 py-2 rounded-lg transition-all duration-200 flex items-center space-x-2 ${
+                    selectedAiCategory === 'content'
+                      ? 'bg-green-100 text-green-700 border-2 border-green-300 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50 border-2 border-transparent'
+                  }`}
+                >
+                  <span className="text-lg">📚</span>
+                  <span className="font-medium">Content Helpers</span>
+                </button>
+                
+                <button
+                  onClick={() => setSelectedAiCategory('other')}
+                  className={`px-4 py-2 rounded-lg transition-all duration-200 flex items-center space-x-2 ${
+                    selectedAiCategory === 'other'
+                      ? 'bg-orange-100 text-orange-700 border-2 border-orange-300 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50 border-2 border-transparent'
+                  }`}
+                >
+                  <span className="text-lg">🌐</span>
+                  <span className="font-medium">Translation</span>
+                </button>
+                
+                <button
+                  onClick={() => setSelectedAiCategory('utilities')}
+                  className={`px-4 py-2 rounded-lg transition-all duration-200 flex items-center space-x-2 ${
+                    selectedAiCategory === 'utilities'
+                      ? 'bg-gray-100 text-gray-700 border-2 border-gray-300 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50 border-2 border-transparent'
+                  }`}
+                >
+                  <span className="text-lg">📊</span>
+                  <span className="font-medium">Utilities</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
           <EditorContent
             pageTitle={pageTitle}
             chapterTitle={chapterTitle}
             content={content}
             onTitleChange={handleTitleChange}
             onChapterChange={handleChapterChange}
-            onContentChange={handleContentChange}
-            lastSaved={lastSaved}
-            viewType={book?.viewType || 'page'}
-            showTitleField={showTitleField}
-            setShowTitleField={setShowTitleField}
-            getCharacterLimit={getCharacterLimit}
+                      onContentChange={handleContentChange}
+          lastSaved={lastSaved}
+          viewType={book?.viewType || 'page'}
+          showTitleField={showTitleField}
+          setShowTitleField={setShowTitleField}
+          getCharacterLimit={getCharacterLimit}
+          handleSave={handleSave}
+          isSaving={isSaving}
+          selectedAiTools={selectedAiTools}
+          selectedCategory={selectedAiCategory}
+          onDynamicMessageChange={setDynamicMessage}
           />
         </div>
 
-        {/* Right Sidebar - AI Assistant */}
+        {/* Right Sidebar */}
         <EditorAIAssistant
           aiSettings={aiSettings}
           aiTab={aiTab}
           setAiTab={setAiTab}
           aiPrompt={aiPrompt}
           setAiPrompt={setAiPrompt}
+          pageTitle={pageTitle}
+          content={content}
+          viewType={book?.viewType || 'page'}
         />
+
       </div>
 
-      {/* Save Button at Bottom */}
+            {/* Save Button at Bottom */}
       <div className="bg-white border-t border-gray-200 px-6 py-4 flex items-center justify-between">
+        {/* Left side - Dynamic hints */}
+        <div className="flex items-center space-x-2">
+          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+          <span className="text-sm text-gray-500">
+            {dynamicMessage || "Hover over buttons or focus on fields for guidance"}
+          </span>
+        </div>
+        
+        {/* Right side - Static save info */}
         <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2">
-            <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-            <span className="text-sm text-gray-600">Click Save to save your changes</span>
-          </div>
+          <span className="text-sm text-gray-500">Click Save to save your changes</span>
           <span className="text-sm text-gray-500">Last saved: {lastSaved.toLocaleTimeString()}</span>
           {pageRefreshed && (
             <div className="flex items-center space-x-2 text-green-600">
@@ -865,16 +1417,24 @@ const EditorView = ({
         
         <button
           onClick={handleSave}
-          className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center space-x-2"
+          className={`btn-primary flex items-center space-x-2 ${isSaving ? 'save-progress' : ''}`}
+          disabled={isSaving}
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-          </svg>
-          <span>Save</span>
+          {isSaving ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+              </svg>
+              <span>{isSaving ? 'Saving...' : 'Save'}</span>
+            </>
+          )}
         </button>
       </div>
 
       {/* Page Preview Modal */}
+      {console.log('EditorView - Rendering PagePreview, previewMode:', previewMode)}
       {previewMode && (
         <PagePreview
           pageTitle={pageTitle}
@@ -883,6 +1443,48 @@ const EditorView = ({
           viewType={book?.viewType || 'page'}
         />
       )}
+      
+      {/* Loading Overlay */}
+      {(isSaving || isCreatingChapter || isCreatingPage || isDeletingChapter || isDeletingPage) && (
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center loading-overlay">
+          <div className="bg-white rounded-lg shadow-xl p-6 flex items-center space-x-4 loading-content">
+            <Loader2 className="w-6 h-6 animate-spin text-[#4299e1]" />
+            <div className="text-gray-700 font-medium">
+              {isSaving && 'Saving changes...'}
+              {isCreatingChapter && 'Creating new chapter...'}
+              {isCreatingPage && 'Creating new page...'}
+              {isDeletingChapter && 'Deleting chapter...'}
+              {isDeletingPage && 'Deleting page...'}
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Success Message */}
+      {showSuccessMessage && (
+        <div className="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 loading-content">
+          <div className="flex items-center space-x-2">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            <span className="font-medium">{successMessage}</span>
+          </div>
+        </div>
+      )}
+      
+      {/* Error Message */}
+      {showErrorMessage && (
+        <div className="fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 loading-content">
+          <div className="flex items-center space-x-2">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            <span className="font-medium">{errorMessage}</span>
+          </div>
+        </div>
+      )}
+      
+      {console.log('Rendering EditorView, previewMode:', previewMode)}
     </div>
   );
 };
